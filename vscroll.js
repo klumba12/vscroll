@@ -1,8 +1,3 @@
-//noinspection JSUnresolvedFunction
-/**
- * Created by dmitry.sitnov on 4/14/2016.
- */
-
 angular.module('vscroll', [])
     .service('vscrollService', function () {
         return function (settings) {
@@ -18,8 +13,7 @@ angular.module('vscroll', [])
                     cursor: 0,
                     page: 0,
                     data: []
-                };
-
+                }
             };
         };
     })
