@@ -4,12 +4,20 @@
  */
 
 angular.module('vscroll', [])
-    .filter('vscrollView', [function() {
-        return function(data, context){
+    .service('vscrollService', function () {
+        return function (context) {
+            context = angular.extend({
+                cursor: 0,
+                page: 0
+            }, context);
+        };
+    })
+    .filter('vscrollView', [function () {
+        return function (data, context) {
 
         };
     }])
-    .directive('vscroll', [function(){
+    .directive('vscroll', [function () {
         return {
             restrict: 'A',
             link: function (scope, element, attrs) {
@@ -17,7 +25,7 @@ angular.module('vscroll', [])
             }
         };
     }])
-    .directive('vscrollPort', [function(){
+    .directive('vscrollPort', [function () {
         return {
             restrict: 'A',
             require: ['^vscroll'],
