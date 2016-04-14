@@ -5,7 +5,7 @@ describe('test view', function() {
         module('vscroll');
         inject(function($injector){
             view = $injector.get('$filter')('vscrollView');
-            service = $injector.get('vscrollService')
+            service = $injector.get('vscrollService');
         });
     });
 
@@ -13,7 +13,7 @@ describe('test view', function() {
         expect(view().length).toEqual(0);
     });
 
-    it('returns empty collection if only data is passed', function () {
+    it('returns empty collection if only data argument is passed', function () {
         expect(view([1, 2, 3]).length).toEqual(0);
     });
 
