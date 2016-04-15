@@ -42,7 +42,6 @@
                         var self = this,
                             threshold = settings.threshold,
                             cursor = container.cursor,
-                            position = settings.position,
                             prevPage = self.page,
                             page = Math.round((cursor + threshold) / threshold) - 1;
 
@@ -61,7 +60,7 @@
 
                     reset: function () {
                         this.cursor = 0;
-                        this.page = -1;
+                        this.page = 0;
                         this.items = [];
                         this.force = true;
                         this.update(true);
@@ -107,7 +106,7 @@
                             view[j] = data[i];
                         }
 
-                        container.force = true;
+                        container.force = false;
                     }
 
                     return view;
