@@ -5,7 +5,7 @@
     <title>vscroll test</title>
 </head>
 <body ng-controller="vscrollTest">
-<h2>vscroll test</h2>
+<h2>vscroll test for {{data.length}} items</h2>
 <table>
     <thead>
     <tr>
@@ -18,7 +18,7 @@
     <tr vscroll-mark="begin">
         <td colspan="3" style="background: red;"></td>
     </tr>
-    <tr vscroll-item="$index" ng-repeat="item in data track by $index | vscroll: vscrollContext">
+    <tr vscroll-item="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
         <td>{{item.id}}</td>
         <td>{{::$index}}</td>
         <td>{{item.name}}</td>
@@ -36,7 +36,7 @@
 <script language="javascript">
     var app = angular.module('app', ['vscroll']);
     app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
-        var threshold = 30;
+        var threshold = 50;
 
         $scope.data = [];
         $scope.vscrollContext = vscroll({

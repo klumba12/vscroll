@@ -32,18 +32,47 @@
                     update: angular.noop
                 }, settings);
 
+                var container = {
+                    cursor: 0,
+                    page: 0,
+                    items: [],
+                    force: true,
+
+                    update: function (force) {
+                        var self = this,
+                            threshold = settings.threshold,
+                            cursor = container.cursor,
+                            position = settings.position,
+                            prevPage = self.page,
+                            page = Math.round((cursor + threshold) / threshold) - 1;
+
+                        if (force || page > prevPage) {
+                            self.page = page;
+
+                            settings.update(
+                                function (count) {
+                                    settings.totalCount = count;
+                                    self.force = true;
+                                },
+                                page,
+                                (Math.max(1, page) - prevPage) * threshold);
+                        }
+                    },
+
+                    reset: function () {
+                        this.cursor = 0;
+                        this.page = -1;
+                        this.items = [];
+                        this.force = true;
+                        this.update(true);
+                    }
+                };
+
+                container.update(true);
+
                 return {
                     settings: settings,
-                    container: {
-                        cursor: 0,
-                        page: -1,
-                        items: [],
-                        update: function (count) {
-                            this.force = true;
-                            this.settings.totalCount = count;
-                        },
-                        force: true
-                    }
+                    container: container
                 };
             };
         })
@@ -58,22 +87,11 @@
                 var settings = context.settings,
                     container = context.container,
                     position = settings.position,
-                    threshold = settings.threshold,
                     cursor = container.cursor,
-                    totalCount = settings.totalCount,
-                    prevPage = container.page,
-                    page = Math.round((position + threshold + Math.min(cursor, 0)) / threshold);
+                    threshold = settings.threshold,
+                    totalCount = settings.totalCount;
 
-                if (page > prevPage) {
-                    settings.update(
-                        function (count) {
-                            container.update(count);
-                        },
-                        (page - prevPage) * threshold,
-                        prevPage + 1);
-
-                    container.page = page;
-                }
+                container.update();
 
                 if (totalCount) {
                     if (container.force || (cursor <= totalCount && cursor !== position)) {
@@ -84,7 +102,7 @@
                             first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
                             last = Math.min(cursor + threshold, totalCount);
 
-                        view.length = first - last;
+                        view.length = last - first;
                         for (var i = first, j = 0; i < last; i++, j++) {
                             view[j] = data[i];
                         }
