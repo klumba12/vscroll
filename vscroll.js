@@ -15,9 +15,9 @@
         };
 
         this.emit = function (e) {
-            var buffer = angular.copy(events);
-            for (var i = 0, length = buffer.length; i < length; i++) {
-                buffer[i](e);
+            var temp = angular.copy(events);
+            for (var i = 0, length = temp.length; i < length; i++) {
+                temp[i](e);
             }
         };
     };
@@ -36,58 +36,66 @@
                     settings: settings,
                     container: {
                         cursor: 0,
-                        page: 0,
+                        page: -1,
                         items: [],
                         update: function (count) {
+                            this.force = true;
                             this.settings.totalCount = count;
                         },
+                        force: true
                     }
                 };
             };
         })
         .filter('vscroll', [function () {
-            var emptyView = [];
+            var empty = [];
 
             return function (data, context) {
                 if (!data || !context) {
-                    return emptyView;
+                    return empty;
                 }
 
                 var settings = context.settings,
-                    container = context.container;
+                    container = context.container,
+                    position = settings.position,
+                    threshold = settings.threshold,
+                    cursor = container.cursor,
+                    totalCount = settings.totalCount,
+                    prevPage = container.page,
+                    page = Math.round((position + threshold + Math.min(cursor, 0)) / threshold);
 
-                var page = Math.round((settings.position + settings.threshold + Math.min(container.cursor, 0)) / settings.threshold);
-                if (page > container.page) {
+                if (page > prevPage) {
                     settings.update(
                         function (count) {
                             container.update(count);
                         },
-                        (page - container.page) * settings.threshold,
-                        container.page + 1);
+                        (page - prevPage) * threshold,
+                        prevPage + 1);
 
                     container.page = page;
                 }
 
-                if (settings.totalCount) {
-                    if (container.cursor <= settings.totalCount &&
-                        container.cursor !== settings.position) {
+                if (totalCount) {
+                    if (container.force || (cursor <= totalCount && cursor !== position)) {
 
-                        settings.position = container.cursor;
+                        settings.position = cursor;
 
                         var view = container.items,
-                            first = Math.max(settings.position + Math.min(settings.totalCount - (settings.position + settings.threshold), 0), 0),
-                            last = Math.min(settings.position + settings.threshold, settings.totalCount);
+                            first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
+                            last = Math.min(cursor + threshold, totalCount);
 
                         view.length = first - last;
                         for (var i = first, j = 0; i < last; i++, j++) {
                             view[j] = data[i];
                         }
+
+                        container.force = true;
                     }
 
                     return view;
                 }
 
-                return emptyView;
+                return empty;
             };
         }])
         .directive('vscroll', [function () {
