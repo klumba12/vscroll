@@ -23,44 +23,61 @@
     };
 
     angular.module('vscroll', [])
-        .service('vscrollService', function () {
+        .service('vscroll', function () {
             return function (settings) {
                 settings = angular.extend({
                     threshold: 64,
                     position: 0,
-                    totalCount: 0
+                    totalCount: 0,
+                    update: angular.noop
                 }, settings);
 
                 return {
                     settings: settings,
-                    context: {
+                    container: {
                         cursor: 0,
                         page: 0,
-                        data: []
+                        items: [],
+                        update: function (count) {
+                            this.settings.totalCount = count;
+                        },
                     }
                 };
             };
         })
-        .filter('vscrollView', [function () {
-            var empty = [];
+        .filter('vscroll', [function () {
+            var emptyView = [];
 
-            return function (data, scope) {
-                if (!data || !scope) {
-                    return empty;
+            return function (data, context) {
+                if (!data || !context) {
+                    return emptyView;
                 }
 
-                var settings = scope.settings;
-                var context = scope.context;
+                var settings = context.settings,
+                    container = context.container;
+
+                var page = Math.round((settings.position + settings.threshold + Math.min(container.cursor, 0)) / settings.threshold);
+                if (page > container.page) {
+                    settings.update(
+                        function (count) {
+                            container.update(count);
+                        },
+                        (page - container.page) * settings.threshold,
+                        container.page + 1);
+
+                    container.page = page;
+                }
 
                 if (settings.totalCount) {
-                    if (context.cursor <= settings.totalCount &&
-                        context.cursor !== settings.position) {
+                    if (container.cursor <= settings.totalCount &&
+                        container.cursor !== settings.position) {
 
-                        settings.position = context.cursor;
-                        var view = context.data;
+                        settings.position = container.cursor;
 
-                        var first = Math.max(settings.position + Math.min(settings.totalCount - (settings.position + settings.threshold), 0), 0);
-                        var last = Math.min(settings.position + settings.threshold, settings.totalCount);
+                        var view = container.items,
+                            first = Math.max(settings.position + Math.min(settings.totalCount - (settings.position + settings.threshold), 0), 0),
+                            last = Math.min(settings.position + settings.threshold, settings.totalCount);
+
                         view.length = first - last;
                         for (var i = first, j = 0; i < last; i++, j++) {
                             view[j] = data[i];
@@ -70,12 +87,14 @@
                     return view;
                 }
 
-                return empty;
+                return emptyView;
             };
         }])
         .directive('vscroll', [function () {
             return {
                 restrict: 'A',
+                controller: [function () {
+                }],
                 link: function (scope, element, attrs) {
 
                 }
@@ -84,6 +103,8 @@
         .directive('vscrollPort', [function () {
             return {
                 restrict: 'A',
+                controller: [function () {
+                }],
                 require: ['^vscroll'],
                 link: function (scope, element, attrs) {
 

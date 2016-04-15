@@ -1,11 +1,12 @@
 describe('test view', function() {
-    var view;
-    var service;
+    var view,
+        service;
+
     beforeEach(function(){
         module('vscroll');
         inject(function($injector){
-            view = $injector.get('$filter')('vscrollView');
-            service = $injector.get('vscrollService');
+            view = $injector.get('$filter')('vscroll');
+            service = $injector.get('vscroll');
         });
     });
 
