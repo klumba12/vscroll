@@ -50,7 +50,11 @@
                 threshold: 64,
                 position: 0,
                 totalCount: 0,
-                update: angular.noop
+                update: angular.noop,
+                apply: function (f, emit) {
+                   f();
+                   emit();
+                }
              }, settings);
 
              var container = {
@@ -96,7 +100,7 @@
              };
           };
        })
-       .filter('vscroll', [function () {
+       .filter('vscroll', function () {
           var empty = [];
 
           return function (data, context) {
@@ -115,13 +119,11 @@
 
              if (totalCount) {
                 if (container.force || (cursor <= totalCount && cursor !== position)) {
-
-                   settings.position = cursor;
-
                    var view = container.items,
                        first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
                        last = Math.min(cursor + threshold, totalCount);
 
+                   settings.position = cursor;
                    view.length = last - first;
                    for (var i = first, j = 0; i < last; i++, j++) {
                       view[j] = data[i];
@@ -135,53 +137,78 @@
 
              return empty;
           };
-       }])
-       .directive('vscroll', [function () {
+       })
+       .directive('vscroll', function () {
           return {
              restrict: 'A',
              controller: [function () {
+                this.scroll = new Event();
              }],
              link: function (scope, element, attrs) {
 
              }
           };
-       }])
-       .directive('vscrollPort', [function () {
+       })
+       .directive('vscrollPort', ['$parse', function ($parse) {
           return {
              restrict: 'A',
              controller: [function () {
+                var rows = [],
+                    cols = [];
+
                 this.markup = {
                    begin: null,
                    end: null
                 };
 
-                this.setRow = function (index, element) {
+                this.layout = function (view) {
 
+                };
+
+                this.setRow = function (index, element) {
+                   rows[index] = element;
                 };
 
                 this.removeRow = function (index) {
-
+                   delete rows[index];
                 };
 
                 this.setColumn = function (index, element) {
-
+                   cols[index] = element;
                 };
 
                 this.removeColumn = function (index) {
-
+                   delete cols[index];
                 };
              }],
              require: ['^vscroll'],
              link: function (scope, element, attrs, ctrls) {
-                var port = ctrls[0];
+                var port = ctrls[0],
+                    view = ctrls[1],
+                    self = this;
+
+                self.context = $parse(attrs.vscrollPort)(scope);
+
+                var scrollOff = view.scroll(
+                    function (e) {
+                       if (settings.totalCount) {
+                          settings.apply(
+                              function () {
+                                 self.layout(e);
+                              },
+                              scope.$digest);
+                       }
+                    });
 
                 scope.on('$destroy', function () {
                    delete port.markup;
+                   delete self.context;
+                   scrollOff();
                 });
              }
           };
        }])
-       .directive('vscrollRow', [function () {
+       .directive('vscrollRow', function () {
           return {
              restrict: 'A',
              require: '^vscrollPort',
@@ -204,8 +231,8 @@
                 });
              }
           };
-       }])
-       .directive('vscrollColumn', [function () {
+       })
+       .directive('vscrollColumn', function () {
           return {
              restrict: 'A',
              require: '^vscrollPort',
@@ -228,8 +255,8 @@
                 });
              }
           };
-       }])
-       .directive('vscrollMark', [function () {
+       })
+       .directive('vscrollMark', function () {
           return {
              restrict: 'A',
              require: '^vscrollPort',
@@ -244,5 +271,7 @@
                 });
              }
           };
-       }]);
+       });
+
+
 })(angular);
