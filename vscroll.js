@@ -22,6 +22,27 @@
       };
    };
 
+   var findIndexAt = function (items, value) {
+      var length = items.length;
+      var min = 0;
+      var max = length - 1;
+      while (min <= max) {
+         var mid = (min + max) >> 1;
+         var k = items[mid];
+         if (k === value) {
+            return mid;
+         }
+         else if (k < items) {
+            min = mid + 1;
+         }
+         else {
+            max = mid - 1;
+         }
+      }
+
+      return min;
+   };
+
    angular.module('vscroll', [])
        .service('vscroll', function () {
           return function (settings) {
@@ -128,7 +149,7 @@
        .directive('vscrollPort', [function () {
           return {
              restrict: 'A',
-             controller: ['$scope', function ($scope) {
+             controller: [function () {
                 this.markup = {
                    begin: null,
                    end: null
@@ -138,7 +159,7 @@
 
                 };
 
-                this.removeRow = function (index, element) {
+                this.removeRow = function (index) {
 
                 };
 
@@ -146,7 +167,7 @@
 
                 };
 
-                this.removeColumn = function (index, element) {
+                this.removeColumn = function (index) {
 
                 };
              }],
