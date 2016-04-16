@@ -159,10 +159,10 @@
                        });
                     };
 
-                element.bind('scroll', onScroll);
+                $element.bind('scroll', onScroll);
 
                 $scope.on('$destroy', function () {
-                   element.unbind('scroll', onScroll);
+                   $element.unbind('scroll', onScroll);
                 });
              }],
           };
