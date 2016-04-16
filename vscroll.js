@@ -118,7 +118,9 @@
              container.update();
 
              if (totalCount) {
-                if (container.force || (cursor <= totalCount && cursor !== position)) {
+                if (container.force ||
+                    (cursor <= totalCount && cursor !== position)) {
+
                    var view = container.items,
                        first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
                        last = Math.min(cursor + threshold, totalCount);
@@ -141,12 +143,28 @@
        .directive('vscroll', function () {
           return {
              restrict: 'A',
-             controller: [function () {
-                this.scroll = new Event();
-             }],
-             link: function (scope, element, attrs) {
+             controller: ['$scope', '$element', function ($scope, $element) {
+                var self = this,
+                    content = $element[0];
 
-             }
+                this.scroll = new Event();
+
+                var onScroll =
+                    function (event) {
+                       self.scrollEvent.emit({
+                          height: content.scrollHeight,
+                          width: content.scrollWidth,
+                          top: $element.scrollTop(),
+                          left: $element.scrollLeft()
+                       });
+                    };
+
+                element.bind('scroll', onScroll);
+
+                $scope.on('$destroy', function () {
+                   element.unbind('scroll', onScroll);
+                });
+             }],
           };
        })
        .directive('vscrollPort', ['$parse', function ($parse) {
