@@ -129,6 +129,10 @@
             return {
                 restrict: 'A',
                 controller: [function () {
+                    this.markup = {
+                        begin: null,
+                        end: null
+                    };
                 }],
                 require: ['^vscroll'],
                 link: function (scope, element, attrs) {
@@ -149,8 +153,13 @@
             return {
                 restrict: 'A',
                 require: '^vscrollPort',
-                link: function (scope, element, attrs) {
+                link: function (scope, element, attrs, ctrls) {
+                    var port = ctrls[0];
+                    port.markup[attr.vscrollMark] = element;
 
+                    scope.on('$destroy', function(){
+                       delete port.markup[attr.vscrollMark];
+                    });
                 }
             };
         }]);
