@@ -50,11 +50,7 @@
                 threshold: 64,
                 position: 0,
                 totalCount: 0,
-                update: angular.noop,
-                apply: function (f, emit) {
-                   f();
-                   emit();
-                }
+                update: angular.noop
              }, settings);
 
              var container = {
@@ -62,6 +58,13 @@
                 page: 0,
                 items: [],
                 force: true,
+                resetEvent: new Event(),
+                updateEvent: new Event(),
+
+                apply: function (f, emit) {
+                   f();
+                   emit();
+                },
 
                 update: function (force) {
                    var self = this,
@@ -76,7 +79,16 @@
                       settings.update(
                           function (count) {
                              settings.totalCount = count;
+                             if (count === 0) {
+                                self.reset();
+                                return;
+                             }
+
                              self.force = true;
+
+                             settings.updateEvent.emit({
+                                force: angular.isUndefined(force) ? true : force
+                             });
                           },
                           page,
                           (Math.max(1, page) - prevPage) * threshold);
@@ -88,6 +100,7 @@
                    this.page = 0;
                    this.items = [];
                    this.force = true;
+                   this.resetEvent.emit();
                    this.update(true);
                 }
              };
@@ -183,6 +196,14 @@
 
                 };
 
+                this.reset = function () {
+
+                };
+
+                this.update = function () {
+
+                };
+
                 this.setRow = function (index, element) {
                    rows[index] = element;
                 };
@@ -203,14 +224,15 @@
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     view = ctrls[1],
-                    self = this;
-
-                self.context = $parse(attrs.vscrollPort)(scope);
+                    self = this,
+                    context = $parse(attrs.vscrollPort)(scope),
+                    settings = context.settings,
+                    container = context.container;
 
                 var scrollOff = view.scroll(
                     function (e) {
                        if (settings.totalCount) {
-                          settings.apply(
+                          container.apply(
                               function () {
                                  self.layout(e);
                               },
@@ -218,10 +240,19 @@
                        }
                     });
 
+                var resetOff = container.resetEvent.on(self.reset);
+                var updateOff = container.updateEvent.on(function (e) {
+                   if (e.force) {
+                      self.reset();
+                   }
+                });
+
                 scope.on('$destroy', function () {
                    delete port.markup;
                    delete self.context;
                    scrollOff();
+                   resetOff();
+                   updateOff();
                 });
              }
           };
