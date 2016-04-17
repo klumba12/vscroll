@@ -15,7 +15,7 @@
     </tr>
     </thead>
     <tbody style="overflow: auto;" vscroll vscroll-port="vscrollContext">
-    <tr vscroll-mark="begin">
+    <tr vscroll-mark="top">
         <td colspan="3" style="background: red;"></td>
     </tr>
     <tr vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
@@ -23,7 +23,7 @@
         <td>{{::$index}}</td>
         <td>{{item.name}}</td>
     </tr>
-    <tr vscroll-mark="end">
+    <tr vscroll-mark="bottom">
         <td colspan="3" style="background: blue;"></td>
     </tr>
     </tbody>

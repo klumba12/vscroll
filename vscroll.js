@@ -43,6 +43,43 @@
       return min;
    };
 
+   var invalidateFactory = function (items, offsets) {
+      return function (index, count) {
+         var threshold = items.length,
+             cursor = offsets.length,
+             diff = Math.min(count - threshold, threshold + index) - cursor;
+
+         for (var i = threshold - diff; i < threshold; i++) {
+            var height = items[i].height();
+            if (cursor === 0) {
+               offsets[cursor] = height;
+            }
+            else {
+               offsets[cursor] = offsets[cursor - 1] + height;
+            }
+
+            cursor++;
+         }
+      };
+   };
+
+   var getPosition = function (offsets, value) {
+      var index = findIndexAt(offsets, value);
+      if (index > 0) {
+         return {
+            value: value,
+            index: index,
+            offset: offsets[index - 1]
+         };
+      }
+
+      return {
+         value: value,
+         index: 0,
+         offset: 0
+      };
+   };
+
    angular.module('vscroll', [])
        .service('vscroll', function () {
           return function (settings) {
@@ -85,7 +122,6 @@
                              }
 
                              self.force = true;
-
                              settings.updateEvent.emit({
                                 force: angular.isUndefined(force) ? true : force
                              });
@@ -161,6 +197,9 @@
                     content = $element[0];
 
                 this.scroll = new Event();
+                this.reset = function () {
+                   element.scrollTop(0);
+                };
 
                 var onScroll =
                     function (event) {
@@ -184,24 +223,63 @@
           return {
              restrict: 'A',
              controller: [function () {
-                var rows = [],
-                    cols = [];
+                var self = this,
+                    rows = [],
+                    cols = [],
+                    left = 0,
+                    top = 0,
+                    hOffsets = [],
+                    hItems = [],
+                    vOffsets = [],
+                    vItems = [],
+                    invalidateH = invalidateFactory(hOffsets, hItems),
+                    invalidateV = invalidateFactory(vOffsets, vItems);
 
-                this.markup = {
-                   begin: null,
-                   end: null
+                this.markup = {};
+
+                var setOffset = function (name, value) {
+                   if (markup.hasOwnProperty(name)) {
+                      markup[name] = value;
+                   }
+                   else {
+                      element.css('padding' + name, value);
+                   }
                 };
 
-                this.layout = function (view) {
+                var layout = function (left, top, right, bottom) {
+                   setOffset('left', left);
+                   setOffset('top', top)
+                   setOffset('right', right);
+                   setOffset('bottom', bottom);
+                };
 
+                this.update = function (view) {
+                   var offset = position.value - position.offset;
+                   if (offset >= 0) {
+                      var cursor = position.index;
+                      if (cursor !== settings.cursor) {
+                         settings.cursor = cursor;
+                      }
+
+                      top = Math.max(top, position.offset);
+                      var marginTop = Math.max(0, position.top - offset);
+                      var marginBottom = Math.max(0, topOffset - marginTop);
+                      resize(0, marginTop, 0, marginBottom);
+                   }
+                };
+
+                this.invalidate = function (view) {
+                   left = 0;
+                   top = 0;
+                   self.update(view);
                 };
 
                 this.reset = function () {
-
-                };
-
-                this.update = function () {
-
+                   left = 0;
+                   top = 0;
+                   hOffsets = [];
+                   vOffsets = [];
+                   layout(0, 0, 0, 0);
                 };
 
                 this.setRow = function (index, element) {
@@ -224,7 +302,7 @@
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     view = ctrls[1],
-                    self = this,
+                    position = null,
                     context = $parse(attrs.vscrollPort)(scope),
                     settings = context.settings,
                     container = context.container;
@@ -234,22 +312,30 @@
                        if (settings.totalCount) {
                           container.apply(
                               function () {
-                                 self.layout(e);
+                                 port.update(e);
                               },
                               scope.$digest);
                        }
                     });
 
-                var resetOff = container.resetEvent.on(self.reset);
-                var updateOff = container.updateEvent.on(function (e) {
-                   if (e.force) {
-                      self.reset();
-                   }
-                });
+                var resetOff = container.resetEvent.on(
+                    function () {
+                       port.reset();
+                       view.reset();
+                    });
+
+                var updateOff = container.updateEvent.on(
+                    function (e) {
+                       if (e.force) {
+                          if (position) {
+                             port.invalidate(position);
+                          }
+                       }
+                    });
 
                 scope.on('$destroy', function () {
                    delete port.markup;
-                   delete self.context;
+
                    scrollOff();
                    resetOff();
                    updateOff();
