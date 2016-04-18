@@ -294,26 +294,26 @@
 
                 this.setRow = function (index, element) {
                    type = 'row';
-                   rows[index] = element;
+                   items[index] = element;
                 };
 
                 this.setColumn = function (index, element) {
                    type = 'column';
-                   cols[index] = element;
+                   itesm[index] = element;
                 };
 
                 this.removeRow = function (index) {
-                   rows[index] = null;
+                   items[index] = null;
                 };
 
                 this.removeColumn = function (index) {
-                   cols[index] = null;
+                   items[index] = null;
                 };
              }],
-             require: ['^vscroll'],
+             require: ['^vscroll', 'vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
-                var port = ctrls[0],
-                    view = ctrls[1],
+                var view = ctrls[0],
+                    port = ctrls[1],
                     position = null,
                     context = $parse(attrs.vscrollPort)(scope),
                     settings = context.settings,
@@ -322,7 +322,7 @@
                 element[0].tabIndex = 0;
                 element.css('outline', 'none');
 
-                var scrollOff = view.scroll(
+                var scrollOff = view.scroll.on(
                     function (e) {
                        if (settings.totalCount) {
                           container.apply(
@@ -362,9 +362,8 @@
           return {
              restrict: 'A',
              require: '^vscrollPort',
-             link: function (scope, element, attrs, ctrls) {
-                var port = ctrls[0],
-                    index = parseInt(attrs.vscrollRow),
+             link: function (scope, element, attrs, port) {
+                var index = parseInt(attrs.vscrollRow),
                     item = function () {
                        return element.outerHeight(true);
                     };
@@ -381,9 +380,8 @@
           return {
              restrict: 'A',
              require: '^vscrollPort',
-             link: function (scope, element, attrs, ctrls) {
-                var port = ctrls[0],
-                    index = parseInt(attrs.vscrollColumn),
+             link: function (scope, element, attrs, port) {
+                var index = parseInt(attrs.vscrollColumn),
                     item = function () {
                        return element.outerwidth(true);
                     };
@@ -400,9 +398,8 @@
           return {
              restrict: 'A',
              require: '^vscrollPort',
-             link: function (scope, element, attrs, ctrls) {
-                var port = ctrls[0];
-                port.markup[attr.vscrollMark] = element;
+             link: function (scope, element, attrs, port) {
+                port.markup[attrs.vscrollMark] = element;
 
                 scope.$on('$destroy', function () {
                    if (port.markup) {
