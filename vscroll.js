@@ -348,7 +348,7 @@
                        }
                     });
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    delete port.markup;
 
                    scrollOff();
@@ -371,7 +371,7 @@
 
                 port.setRow(index, item);
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    port.removeRow(index);
                 });
              }
@@ -390,7 +390,7 @@
 
                 port.setColumn(index, item);
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    port.removeColumn(index);
                 });
              }
@@ -404,7 +404,7 @@
                 var port = ctrls[0];
                 port.markup[attr.vscrollMark] = element;
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    if (port.markup) {
                       port.markup[attr.vscrollMark] = null;
                    }
