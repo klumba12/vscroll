@@ -43,8 +43,8 @@
       return min;
    };
 
-   var invalidateFactory = function (items, offsets) {
-      return function (index, count) {
+   var invalidateFactory = function (items) {
+      return function (offsets, index, count) {
          var threshold = items.length,
              cursor = offsets.length,
              diff = Math.min(count - threshold, threshold + index) - cursor;
@@ -224,16 +224,12 @@
              restrict: 'A',
              controller: [function () {
                 var self = this,
-                    rows = [],
-                    cols = [],
-                    left = 0,
-                    top = 0,
-                    hOffsets = [],
-                    hItems = [],
-                    vOffsets = [],
-                    vItems = [],
-                    invalidateH = invalidateFactory(hOffsets, hItems),
-                    invalidateV = invalidateFactory(vOffsets, vItems);
+                    type = null,
+                    items = [],
+                    max = 0,
+                    offsets = [],
+                    position = {index: 0, offset: 0, value: 0},
+                    invalidate = invalidateFactory(items);
 
                 this.markup = {};
 
@@ -246,14 +242,10 @@
                    }
                 };
 
-                var layout = function (left, top, right, bottom) {
-                   setOffset('left', left);
-                   setOffset('top', top)
-                   setOffset('right', right);
-                   setOffset('bottom', bottom);
-                };
+                this.update = function (count, view) {
+                   invalidate(offsets, position, view.count);
+                   position = getPosition(offsets, view.top);
 
-                this.update = function (view) {
                    var offset = position.value - position.offset;
                    if (offset >= 0) {
                       var cursor = position.index;
@@ -261,41 +253,61 @@
                          settings.cursor = cursor;
                       }
 
-                      top = Math.max(top, position.offset);
-                      var marginTop = Math.max(0, position.top - offset);
-                      var marginBottom = Math.max(0, topOffset - marginTop);
-                      resize(0, marginTop, 0, marginBottom);
+                      max = Math.max(max, position.offset);
+                      switch (type) {
+                         case 'row':
+                            var top = Math.max(0, position.top - offset);
+                            var bottom = Math.max(0, max - top)
+                            setOffset('top', top);
+                            setOffset('bottom', bottom);
+                            break;
+                         case 'column':
+                            var left = Math.max(0, position.left - offset);
+                            var right = Math.max(0, max - left)
+                            setOffset('left', left);
+                            setOffset('right', right);
+                            break;
+                      }
                    }
                 };
 
                 this.invalidate = function (view) {
-                   left = 0;
-                   top = 0;
+                   max = 0;
                    self.update(view);
                 };
 
                 this.reset = function () {
-                   left = 0;
-                   top = 0;
-                   hOffsets = [];
-                   vOffsets = [];
-                   layout(0, 0, 0, 0);
+                   max = 0;
+                   offsets = [];
+
+                   switch (type) {
+                      case 'row':
+                         setOffset('top', 0);
+                         setOffset('bottom', 0);
+                         break;
+                      case 'column':
+                         setOffset('left', 0);
+                         setOffset('right', 0);
+                         break;
+                   }
                 };
 
                 this.setRow = function (index, element) {
+                   type = 'row';
                    rows[index] = element;
                 };
 
-                this.removeRow = function (index) {
-                   delete rows[index];
-                };
-
                 this.setColumn = function (index, element) {
+                   type = 'column';
                    cols[index] = element;
                 };
 
+                this.removeRow = function (index) {
+                   rows[index] = null;
+                };
+
                 this.removeColumn = function (index) {
-                   delete cols[index];
+                   cols[index] = null;
                 };
              }],
              require: ['^vscroll'],
@@ -312,7 +324,7 @@
                        if (settings.totalCount) {
                           container.apply(
                               function () {
-                                 port.update(e);
+                                 port.update(settings.totalCount, e);
                               },
                               scope.$digest);
                        }
