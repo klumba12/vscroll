@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <title>vscroll test</title>
+</head>
+<body ng-controller="vscrollTest">
+<h2>vscroll test for {{data.length}} items</h2>
+<table>
+    <thead>
+    <tr>
+        <th style="width: 100px;">id</th>
+        <th style="width: 200px;">$index</th>
+        <th style="width: 300px;">name</th>
+    </tr>
+    </thead>
+    <tbody style="overflow: auto;" vscroll vscroll-port="vscrollContext">
+    <tr vscroll-mark="begin">
+        <td colspan="3" style="background: red;"></td>
+    </tr>
+    <tr vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
+        <td>{{item.id}}</td>
+        <td>{{::$index}}</td>
+        <td>{{item.name}}</td>
+    </tr>
+    <tr vscroll-mark="end">
+        <td colspan="3" style="background: blue;"></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>
+
+<script src="https://code.angularjs.org/1.5.4/angular.js"></script>
+<script src="../vscroll.js"></script>
+<script language="javascript">
+    var app = angular.module('app', ['vscroll']);
+    app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
+        var threshold = 50;
+
+        $scope.data = [];
+        $scope.vscrollContext = vscroll({
+            threshold: threshold,
+            update: function (resolve, page, pageSize) {
+                var first = page * threshold;
+                for (var i = 0; i < pageSize; i++) {
+                    var index = first + i;
+                    $scope.data[index] = {id: index, name: 'name ' + index};
+                }
+
+                resolve($scope.data.length);
+            }
+        });
+    }]);
+</script>
