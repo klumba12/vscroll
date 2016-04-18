@@ -198,7 +198,7 @@
 
                 this.scroll = new Event();
                 this.reset = function () {
-                   element.scrollTop(0);
+                   $element.scrollTop(0);
                 };
 
                 var onScroll =
@@ -299,7 +299,7 @@
 
                 this.setColumn = function (index, element) {
                    type = 'column';
-                   itesm[index] = element;
+                   items[index] = element;
                 };
 
                 this.removeRow = function (index) {
