@@ -122,7 +122,7 @@
                              }
 
                              self.force = true;
-                             settings.updateEvent.emit({
+                             container.updateEvent.emit({
                                 force: angular.isUndefined(force) ? true : force
                              });
                           },
@@ -213,7 +213,7 @@
 
                 $element.bind('scroll', onScroll);
 
-                $scope.on('$destroy', function () {
+                $scope.$on('$destroy', function () {
                    $element.unbind('scroll', onScroll);
                 });
              }],
@@ -307,7 +307,7 @@
                     settings = context.settings,
                     container = context.container;
 
-                var scrollOff = view.scroll(
+                var scrollOff = port.scroll.on(
                     function (e) {
                        if (settings.totalCount) {
                           container.apply(
@@ -333,7 +333,7 @@
                        }
                     });
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    delete port.markup;
 
                    scrollOff();
@@ -346,7 +346,7 @@
        .directive('vscrollRow', function () {
           return {
              restrict: 'A',
-             require: '^vscrollPort',
+             require: ['^vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     index = parseInt(attrs.vscrollRow),
@@ -361,7 +361,7 @@
 
                 port.setRow(index, item);
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    port.removeRow(index);
                 });
              }
@@ -370,7 +370,7 @@
        .directive('vscrollColumn', function () {
           return {
              restrict: 'A',
-             require: '^vscrollPort',
+             require: ['^vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     index = parseInt(attrs.vscrollColumn),
@@ -385,7 +385,7 @@
 
                 port.setColumn(index, item);
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    port.removeColumn(index);
                 });
              }
@@ -394,12 +394,12 @@
        .directive('vscrollMark', function () {
           return {
              restrict: 'A',
-             require: '^vscrollPort',
+             require: ['^vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0];
-                port.markup[attr.vscrollMark] = element;
+                port.markup[attrs.vscrollMark] = element;
 
-                scope.on('$destroy', function () {
+                scope.$on('$destroy', function () {
                    if (port.markup) {
                       port.markup[attr.vscrollMark] = null;
                    }

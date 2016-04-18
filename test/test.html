@@ -6,28 +6,26 @@
 </head>
 <body ng-controller="vscrollTest">
 <h2>vscroll test for {{data.length}} items</h2>
-<table>
-    <thead>
-    <tr>
-        <th style="width: 100px;">id</th>
-        <th style="width: 200px;">$index</th>
-        <th style="width: 300px;">name</th>
-    </tr>
-    </thead>
-    <tbody style="overflow: auto;" vscroll vscroll-port="vscrollContext">
-    <tr vscroll-mark="top">
-        <td colspan="3" style="background: red;"></td>
-    </tr>
-    <tr vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
-        <td>{{item.id}}</td>
-        <td>{{::$index}}</td>
-        <td>{{item.name}}</td>
-    </tr>
-    <tr vscroll-mark="bottom">
-        <td colspan="3" style="background: blue;"></td>
-    </tr>
-    </tbody>
-</table>
+<div vscroll>
+    <table>
+        <thead vscroll-port="horizontalContext">
+        <tr>
+            <th ng-repeat="header in headers | vscroll: horizontalContext track by $index" vscroll-column="{{$index}}"></th>
+        </tr>
+        </thead>
+        <tbody style="overflow: auto;" vscroll-port="verticalContext">
+        <tr vscroll-mark="top">
+            <td colspan="3" style="background: red;"></td>
+        </tr>
+        <tr vscroll-row="{{$index}}" ng-repeat="row in data | vscroll: verticalContext track by $index ">
+            <td ng-repeat="cell in row | vscroll: horizontalContext track by $index" vscroll-column="{{$index}}">{{cell}}</td>
+        </tr>
+        <tr vscroll-mark="bottom">
+            <td colspan="3" style="background: blue;"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>
 
@@ -37,19 +35,40 @@
     var app = angular.module('app', ['vscroll']);
     app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
         var threshold = 50;
+        var columnCount = 100;
 
+        $scope.headers = populateRow(function(index) {
+            return 'Column ' + index;
+        });
+        
         $scope.data = [];
-        $scope.vscrollContext = vscroll({
+        
+        $scope.verticalContext = vscroll({
             threshold: threshold,
             update: function (resolve, page, pageSize) {
                 var first = page * threshold;
                 for (var i = 0; i < pageSize; i++) {
                     var index = first + i;
-                    $scope.data[index] = {id: index, name: 'name ' + index};
+                    $scope.data[index] = populateRow(function(index) {
+                        return 'Row ' + index + ' Column ' + index;
+                    });;
                 }
 
                 resolve($scope.data.length);
             }
         });
+        
+        $scope.horizontalContext = vscroll({
+            threshold: threshold
+        });
+        
+        function populateRow(format) {
+            var row = [];
+            for (var i = 0; i < columnCount; i++) {
+                format(i);
+                row.push(format(i));
+            }
+            return row;
+        }
     }]);
 </script>
