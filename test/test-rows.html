@@ -9,7 +9,7 @@
 <table>
     <thead>
     <tr>
-        <th style="width: 100px;">id</th>
+        <th style="idth: 100px;">id</th>
         <th style="width: 200px;">$index</th>
         <th style="width: 300px;">name</th>
     </tr>
@@ -41,14 +41,14 @@
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: threshold,
-            update: function (resolve, page, pageSize) {
+            update: function (page, pageSize, d) {
                 var first = page * threshold;
                 for (var i = 0; i < pageSize; i++) {
                     var index = first + i;
                     $scope.data[index] = {id: index, name: 'name ' + index};
                 }
 
-                resolve($scope.data.length);
+                d.resolve($scope.data.length);
             }
         });
     }]);

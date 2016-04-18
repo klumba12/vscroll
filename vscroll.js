@@ -81,7 +81,7 @@
    };
 
    angular.module('vscroll', [])
-       .service('vscroll', function () {
+       .service('vscroll', ['$q', function ($q) {
           return function (settings) {
              settings = angular.extend({
                 threshold: 64,
@@ -113,8 +113,9 @@
                    if (force || page > prevPage) {
                       self.page = page;
 
-                      settings.update(
-                          function (count) {
+                      var deferred = $q.defer();
+                      deferred.promise
+                          .then(function (count) {
                              settings.totalCount = count;
                              if (count === 0) {
                                 self.reset();
@@ -125,9 +126,12 @@
                              self.updateEvent.emit({
                                 force: angular.isUndefined(force) ? true : force
                              });
-                          },
+                          });
+
+                      settings.update(
                           page,
-                          (Math.max(1, page) - prevPage) * threshold);
+                          (Math.max(1, page) - prevPage) * threshold,
+                          deferred);
                    }
                 },
 
@@ -148,7 +152,7 @@
                 container: container
              };
           };
-       })
+       }])
        .filter('vscroll', function () {
           var empty = [];
 
@@ -159,6 +163,7 @@
 
              var settings = context.settings,
                  container = context.container,
+                 view = container.items,
                  position = settings.position,
                  cursor = container.cursor,
                  threshold = settings.threshold,
@@ -170,8 +175,7 @@
                 if (container.force ||
                     (cursor <= totalCount && cursor !== position)) {
 
-                   var view = container.items,
-                       first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
+                   var first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
                        last = Math.min(cursor + threshold, totalCount);
 
                    settings.position = cursor;
@@ -233,7 +237,7 @@
 
                 this.markup = {};
 
-                var setOffset = function (name, value) {
+                var move = function (name, value) {
                    if (markup.hasOwnProperty(name)) {
                       markup[name] = value;
                    }
@@ -258,14 +262,14 @@
                          case 'row':
                             var top = Math.max(0, position.top - offset);
                             var bottom = Math.max(0, max - top)
-                            setOffset('top', top);
-                            setOffset('bottom', bottom);
+                            move('top', top);
+                            move('bottom', bottom);
                             break;
                          case 'column':
                             var left = Math.max(0, position.left - offset);
                             var right = Math.max(0, max - left)
-                            setOffset('left', left);
-                            setOffset('right', right);
+                            move('left', left);
+                            move('right', right);
                             break;
                       }
                    }
@@ -282,12 +286,12 @@
 
                    switch (type) {
                       case 'row':
-                         setOffset('top', 0);
-                         setOffset('bottom', 0);
+                         move('top', 0);
+                         move('bottom', 0);
                          break;
                       case 'column':
-                         setOffset('left', 0);
-                         setOffset('right', 0);
+                         move('left', 0);
+                         move('right', 0);
                          break;
                    }
                 };
