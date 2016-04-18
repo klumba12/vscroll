@@ -122,7 +122,7 @@
                              }
 
                              self.force = true;
-                             settings.updateEvent.emit({
+                             self.updateEvent.emit({
                                 force: angular.isUndefined(force) ? true : force
                              });
                           },
@@ -213,7 +213,7 @@
 
                 $element.bind('scroll', onScroll);
 
-                $scope.on('$destroy', function () {
+                $scope.$on('$destroy', function () {
                    $element.unbind('scroll', onScroll);
                 });
              }],
@@ -318,6 +318,9 @@
                     context = $parse(attrs.vscrollPort)(scope),
                     settings = context.settings,
                     container = context.container;
+
+                element[0].tabIndex = 0;
+                element.css('outline', 'none');
 
                 var scrollOff = view.scroll(
                     function (e) {
