@@ -50,12 +50,12 @@
              diff = Math.min(count - threshold, threshold + index) - cursor;
 
          for (var i = threshold - diff; i < threshold; i++) {
-            var height = items[i].height();
+            var value = items[i]();
             if (cursor === 0) {
-               offsets[cursor] = height;
+               offsets[cursor] = value;
             }
             else {
-               offsets[cursor] = offsets[cursor - 1] + height;
+               offsets[cursor] = offsets[cursor - 1] + value;
             }
 
             cursor++;
@@ -350,13 +350,8 @@
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     index = parseInt(attrs.vscrollRow),
-                    item = {
-                       height: function () {
-                          return element.outerHeight(true);
-                       },
-                       width: function () {
-                          return element.outerWidth(true);
-                       }
+                    item = function () {
+                       return element.outerHeight(true);
                     };
 
                 port.setRow(index, item);
@@ -374,13 +369,8 @@
              link: function (scope, element, attrs, ctrls) {
                 var port = ctrls[0],
                     index = parseInt(attrs.vscrollColumn),
-                    item = {
-                       height: function () {
-                          return element.outerHeight(true);
-                       },
-                       width: function () {
-                          return element.outerWidth(true);
-                       }
+                    item = function () {
+                       return element.outerwidth(true);
                     };
 
                 port.setColumn(index, item);
