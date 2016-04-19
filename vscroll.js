@@ -100,7 +100,7 @@
        .service('vscroll', ['$q', function ($q) {
           return function (settings) {
              settings = angular.extend({
-                threshold: 32,
+                threshold: 64,
                 position: 0,
                 totalCount: 0,
                 update: angular.noop
@@ -147,12 +147,12 @@
                       if(page === 0) {
                          settings.update(
                              0,
-                             threshold * 2,
+                             threshold,
                              deferred);
                       }
                       else{
                          settings.update(
-                             (page + 1) * threshold - 1,
+                             (prevPage + 1) * threshold - 1,
                              (page - prevPage) * threshold,
                              deferred);
                       }
@@ -318,6 +318,7 @@
                 this.reset = function () {
                    max = 0;
                    offsets = [];
+                   position = {index: 0, offset: 0, value: 0};
 
                    switch (type) {
                       case 'row':
