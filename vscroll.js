@@ -122,7 +122,7 @@
                 update: function (force) {
                    var self = this,
                        threshold = settings.threshold,
-                       cursor = container.cursor,
+                       cursor = self.cursor,
                        prevPage = self.page,
                        page = Math.round((cursor + threshold) / threshold) - 1;
 
@@ -145,7 +145,7 @@
                           });
 
                       settings.update(
-                          page,
+                          self.page,
                           (Math.max(1, page) - prevPage) * threshold,
                           deferred);
                    }
@@ -261,13 +261,16 @@
 
                 self.markup = {};
 
-                var move = function (name, value) {
-                   if (self.markup.hasOwnProperty(name)) {
-                      self.markup[name] = value;
+                var move = function (dir, value) {
+                   var element = null;
+                   if (self.markup.hasOwnProperty(dir)) {
+                      element = self.markup[dir];
                    }
                    else {
-                      $element.css('padding' + name, value);
+                      element = $element;
                    }
+
+                   element.css('padding-' + dir, value + 'px');
                 };
 
                 this.update = function (count, view) {
