@@ -1,6 +1,22 @@
 (function (angular) {
    "use strict";
 
+   var getHeight = function (element) {
+      var height = element.offsetHeight,
+          style = getComputedStyle(element);
+
+      height += parseInt(style.marginTop) + parseInt(style.marginBottom);
+      return height;
+   };
+
+   var getWidth = function (element) {
+      var width = element.offsetWidth,
+          style = getComputedStyle(element);
+
+      width += parseInt(style.marginLeft) + parseInt(style.marginRight);
+      return width;
+   };
+
    var Event = function () {
       var events = [];
 
@@ -32,7 +48,7 @@
          if (k === value) {
             return mid;
          }
-         else if (k < items) {
+         else if (k < value) {
             min = mid + 1;
          }
          else {
@@ -84,7 +100,7 @@
        .service('vscroll', ['$q', function ($q) {
           return function (settings) {
              settings = angular.extend({
-                threshold: 64,
+                threshold: 32,
                 position: 0,
                 totalCount: 0,
                 update: angular.noop
@@ -161,7 +177,7 @@
                 return empty;
              }
 
-             if(!context){
+             if (!context) {
                 throw new Error('Context for vscroll filter is not set');
              }
 
@@ -239,6 +255,10 @@
                     position = {index: 0, offset: 0, value: 0},
                     invalidate = invalidateFactory(items);
 
+                //
+                // TODO: refactor type
+                //
+
                 self.markup = {};
 
                 var move = function (name, value) {
@@ -251,34 +271,36 @@
                 };
 
                 this.update = function (count, view) {
-                   invalidate(offsets, position, view.count);
-                   position = getPosition(offsets, view.top);
+                   invalidate(offsets, position.index, count);
+                   position = getPosition(offsets, type == 'row' ? view.top : view.left);
 
                    var offset = position.value - position.offset;
                    if (offset >= 0) {
                       max = Math.max(max, position.offset);
                       switch (type) {
                          case 'row':
-                            var top = Math.max(0, position.top - offset);
+                            var top = Math.max(0, position.value - offset);
                             var bottom = Math.max(0, max - top)
                             move('top', top);
                             move('bottom', bottom);
                             break;
                          case 'column':
-                            var left = Math.max(0, position.left - offset);
+                            var left = Math.max(0, position.value - offset);
                             var right = Math.max(0, max - left)
                             move('left', left);
                             move('right', right);
                             break;
+                         default:
+                            throw  Error('Invalid type ' + type);
                       }
                    }
 
                    return position.index;
                 };
 
-                this.invalidate = function (view) {
+                this.invalidate = function (count, view) {
                    max = 0;
-                   return self.update(view);
+                   return self.update(count, view);
                 };
 
                 this.reset = function () {
@@ -318,8 +340,8 @@
              require: ['^vscroll', 'vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
                 var context = $parse(attrs.vscrollPort)(scope);
-                if(!context){
-                   throw  Error('Context for vscroll-port is not set');
+                if (!context) {
+                   throw  Error('Context for vscroll port is not set');
                 }
 
                 var view = ctrls[0],
@@ -333,6 +355,7 @@
 
                 var scrollOff = view.scrollEvent.on(
                     function (e) {
+                       position = e;
                        if (settings.totalCount) {
                           container.apply(
                               function () {
@@ -352,7 +375,7 @@
                     function (e) {
                        if (e.force) {
                           if (position) {
-                             container.cursor = port.invalidate(position);
+                             container.cursor = port.invalidate(settings.totalCount, position);
                           }
                        }
                     });
@@ -372,12 +395,17 @@
              restrict: 'A',
              require: '^vscrollPort',
              link: function (scope, element, attrs, port) {
-                var index = parseInt(attrs.vscrollRow),
-                    item = function () {
-                       return element.outerHeight(true);
+                var index = parseInt(attrs.vscrollRow);
+                if (isNaN(index)) {
+                   throw new Error('Incorrect index "' + attrs.vscrollRow + '" for vscroll row');
+                }
+
+                var row = element[0],
+                    size = function () {
+                       return getHeight(row);
                     };
 
-                port.setRow(index, item);
+                port.setRow(index, size);
 
                 scope.$on('$destroy', function () {
                    port.removeRow(index);
@@ -390,12 +418,17 @@
              restrict: 'A',
              require: '^vscrollPort',
              link: function (scope, element, attrs, port) {
-                var index = parseInt(attrs.vscrollColumn),
-                    item = function () {
-                       return element.outerwidth(true);
+                var index = parseInt(attrs.vscrollColumn);
+                if (isNaN(index)) {
+                   throw new Error('Incorrect index "' + attrs.vscrollColumn + '" for vscroll column')
+                }
+
+                var column = element[0],
+                    size = function () {
+                       return getWidth(column);
                     };
 
-                port.setColumn(index, item);
+                port.setColumn(index, size);
 
                 scope.$on('$destroy', function () {
                    port.removeColumn(index);

@@ -12,10 +12,20 @@
 <h2>vscroll test for {{data.length}} items</h2>
 <div>
     <button ng-click="reset()">reset</button>
+    <button ng-click="update()">update</button>
     <ul vscroll vscroll-port="vscrollContext" style="height:200px; width:100px; overflow-y: auto; list-style: none;">
-        <li vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index">
+        <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index">
             {{$index}}: {{item.id}}
         </li>
+    </ul>
+    <ul style="list-style: none">
+        <li><b>settings.threshold:</b> {{settings.threshold}}</li>
+        <li><b>settings.totalCount:</b> {{settings.totalCount}}</li>
+        <li><b>settings.position:</b> {{settings.position}}</li>
+        <li><b>container.cursor:</b>{{container.cursor}}</li>
+        <li><b>container.page:</b> {{container.page}}</li>
+        <li><b>container.force:</b> {{container.force}}</li>
+        <li><b>container.items:</b> {{container.items.length}}</li>
     </ul>
 </div>
 </body>
@@ -26,14 +36,16 @@
 <script language="javascript">
     var app = angular.module('app', ['vscroll']);
     app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
-        var threshold = 50;
+        var threshold = 20;
 
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: threshold,
             update: function (page, pageSize, d) {
+                console.log('update requested: page ' + page);
+
                 var first = page * threshold;
-                for (var i = 0; i < pageSize; i++) {
+                for (var i = 0; i < pageSize * 2; i++) {
                     var index = first + i;
                     $scope.data[index] = {id: index, name: 'name ' + index};
                 }
@@ -42,8 +54,21 @@
             }
         });
 
+        $scope.settings = $scope.vscrollContext.settings;
+        $scope.container = $scope.vscrollContext.container;
+        $scope.container.apply = function (f, emit) {
+            console.log('apply requested');
+
+            f();
+            $scope.$digest();
+        };
+
         $scope.reset = function () {
-          $scope.vscrollContext.container.reset();
+            $scope.vscrollContext.container.reset();
+        };
+
+        $scope.update = function () {
+            $scope.vscrollContext.container.update();
         };
     }]);
 </script>
