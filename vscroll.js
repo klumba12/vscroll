@@ -210,12 +210,12 @@
                 };
 
                 var onScroll =
-                    function (event) {
+                    function (e) {
                        self.scrollEvent.emit({
-                          height: content.scrollHeight,
                           width: content.scrollWidth,
-                          top: $element.scrollTop(),
-                          left: $element.scrollLeft()
+                          height: content.scrollHeight,
+                          top: content.scrollTop,
+                          left: content.scrollLeft
                        });
                     };
 
@@ -230,7 +230,7 @@
        .directive('vscrollPort', ['$parse', function ($parse) {
           return {
              restrict: 'A',
-             controller: [function () {
+             controller: ['$element', function ($element) {
                 var self = this,
                     type = null,
                     items = [],
@@ -239,14 +239,14 @@
                     position = {index: 0, offset: 0, value: 0},
                     invalidate = invalidateFactory(items);
 
-                this.markup = {};
+                self.markup = {};
 
                 var move = function (name, value) {
-                   if (markup.hasOwnProperty(name)) {
-                      markup[name] = value;
+                   if (self.markup.hasOwnProperty(name)) {
+                      self.markup[name] = value;
                    }
                    else {
-                      element.css('padding' + name, value);
+                      $element.css('padding' + name, value);
                    }
                 };
 
@@ -256,11 +256,6 @@
 
                    var offset = position.value - position.offset;
                    if (offset >= 0) {
-                      var cursor = position.index;
-                      if (cursor !== settings.cursor) {
-                         settings.cursor = cursor;
-                      }
-
                       max = Math.max(max, position.offset);
                       switch (type) {
                          case 'row':
@@ -277,11 +272,13 @@
                             break;
                       }
                    }
+
+                   return position.index;
                 };
 
                 this.invalidate = function (view) {
                    max = 0;
-                   self.update(view);
+                   return self.update(view);
                 };
 
                 this.reset = function () {
@@ -322,7 +319,7 @@
              link: function (scope, element, attrs, ctrls) {
                 var context = $parse(attrs.vscrollPort)(scope);
                 if(!context){
-                   throw  Error('Context for vscroll-port is not set')''
+                   throw  Error('Context for vscroll-port is not set');
                 }
 
                 var view = ctrls[0],
@@ -339,7 +336,7 @@
                        if (settings.totalCount) {
                           container.apply(
                               function () {
-                                 port.update(settings.totalCount, e);
+                                 container.cursor = port.update(settings.totalCount, e);
                               },
                               scope.$digest);
                        }
@@ -355,7 +352,7 @@
                     function (e) {
                        if (e.force) {
                           if (position) {
-                             port.invalidate(position);
+                             container.cursor = port.invalidate(position);
                           }
                        }
                     });
