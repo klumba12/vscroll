@@ -11,7 +11,7 @@
 <body ng-controller="vscrollTest">
 <h2>vscroll test for {{data.length}} items</h2>
 <div>
-    <ul vscroll vscroll-port="vcrollContext" style="height:200px; width:100px; overflow-y: auto; list-style: none;">
+    <ul vscroll vscroll-port="vscrollContext" style="height:200px; width:100px; overflow-y: auto; list-style: none;">
         <li vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index">
             {{$index}}: {{item.id}}
         </li>

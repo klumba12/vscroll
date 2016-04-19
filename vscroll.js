@@ -157,8 +157,12 @@
           var empty = [];
 
           return function (data, context) {
-             if (!data || !context) {
+             if (!data) {
                 return empty;
+             }
+
+             if(!context){
+                throw new Error('Context for vscroll filter is not set');
              }
 
              var settings = context.settings,
@@ -200,7 +204,7 @@
                 var self = this,
                     content = $element[0];
 
-                this.scroll = new Event();
+                this.scrollEvent = new Event();
                 this.reset = function () {
                    $element.scrollTop(0);
                 };
@@ -316,17 +320,21 @@
              }],
              require: ['^vscroll', 'vscrollPort'],
              link: function (scope, element, attrs, ctrls) {
+                var context = $parse(attrs.vscrollPort)(scope);
+                if(!context){
+                   throw  Error('Context for vscroll-port is not set')''
+                }
+
                 var view = ctrls[0],
                     port = ctrls[1],
                     position = null,
-                    context = $parse(attrs.vscrollPort)(scope),
                     settings = context.settings,
                     container = context.container;
 
                 element[0].tabIndex = 0;
                 element.css('outline', 'none');
 
-                var scrollOff = view.scroll.on(
+                var scrollOff = view.scrollEvent.on(
                     function (e) {
                        if (settings.totalCount) {
                           container.apply(
