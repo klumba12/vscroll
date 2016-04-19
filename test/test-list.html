@@ -15,7 +15,7 @@
     <button ng-click="update()">update</button>
     <button ng-mousedown="up()" ng-mouseup="release()">&uparrow;</button>
     <button ng-mousedown="down()" ng-mouseup="release()">&downarrow;</button>
-    <ul id="vscroll-list" vscroll vscroll-port="vscrollContext" style="height:40px; width: 100px; overflow-y: auto; list-style: none;">
+    <ul id="vscroll-list" vscroll vscroll-port="vscrollContext" style="height:40px; width: 100px; overflow-y: auto; list-style: none; max-height: 40px;">
         <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index" style="height: 20px;">
             {{$index}}: {{item.id}}
         </li>
@@ -46,16 +46,15 @@
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: threshold,
-            update: function (page, pageSize, d) {
-                console.log('update requested: page ' + page);
+            update: function (skip, take, d) {
+                console.log('update requested: skip ' + skip);
+                console.log('update requested: take ' + take);
 
-                var first = page * threshold;
-                for (var i = 0; i < pageSize; i++) {
-                    var index = first + i;
-                    $scope.data[index] = {id: index, name: 'name ' + index};
+                for (var i = skip; i < skip + take; i++) {
+                    $scope.data[i] = {id: i, name: 'name ' + i};
                 }
 
-                d.resolve($scope.data.length * 2);
+                d.resolve(Number.MAX_SAFE_INTEGER);
             }
         });
 
@@ -88,7 +87,7 @@
             var element = document.getElementById('vscroll-list');
             promise = $interval(function() {
                 element.scrollTop = element.scrollTop - 1;
-            }, 200);
+            }, 100);
         };
 
         $scope.release = function(){

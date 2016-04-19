@@ -124,7 +124,7 @@
                        threshold = settings.threshold,
                        cursor = self.cursor,
                        prevPage = self.page,
-                       page = Math.round((cursor + threshold) / threshold) - 1;
+                       page = Math.ceil((cursor + threshold) / threshold) - 1;
 
                    if (force || page > prevPage) {
                       self.page = page;
@@ -144,10 +144,19 @@
                              });
                           });
 
-                      settings.update(
-                          self.page,
-                          (Math.max(1, page) - prevPage) * threshold,
-                          deferred);
+                      if(page === 0) {
+                         settings.update(
+                             0,
+                             threshold * 2,
+                             deferred);
+                      }
+                      else{
+                         settings.update(
+                             (page + 1) * threshold - 1,
+                             (page - prevPage) * threshold,
+                             deferred);
+                      }
+
                    }
                 },
 
