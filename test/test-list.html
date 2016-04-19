@@ -13,8 +13,10 @@
 <div>
     <button ng-click="reset()">reset</button>
     <button ng-click="update()">update</button>
-    <ul vscroll vscroll-port="vscrollContext" style="height:200px; width:100px; overflow-y: auto; list-style: none;">
-        <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index">
+    <button ng-mousedown="up()" ng-mouseup="release()">&uparrow;</button>
+    <button ng-mousedown="down()" ng-mouseup="release()">&downarrow;</button>
+    <ul id="vscroll-list" vscroll vscroll-port="vscrollContext" style="height:40px; width: 100px; overflow-y: auto; list-style: none;">
+        <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index" style="height: 20px;">
             {{$index}}: {{item.id}}
         </li>
     </ul>
@@ -25,7 +27,10 @@
         <li><b>container.cursor:</b>{{container.cursor}}</li>
         <li><b>container.page:</b> {{container.page}}</li>
         <li><b>container.force:</b> {{container.force}}</li>
-        <li><b>container.items:</b> {{container.items.length}}</li>
+        <li><b>container.items.length:</b> {{container.items.length}}</li>
+        <li><b>container.items[first]:</b> {{container.items[0]}}</li>
+        <li><b>container.items[last]:</b> {{container.items[container.items.length - 1]}}</li>
+        <li><b>container.items:</b> {{container.items}}</li>
     </ul>
 </div>
 </body>
@@ -35,8 +40,8 @@
 <script src="../vscroll.js"></script>
 <script language="javascript">
     var app = angular.module('app', ['vscroll']);
-    app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
-        var threshold = 20;
+    app.controller('vscrollTest', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
+        var threshold = 5;
 
         $scope.data = [];
         $scope.vscrollContext = vscroll({
@@ -45,12 +50,12 @@
                 console.log('update requested: page ' + page);
 
                 var first = page * threshold;
-                for (var i = 0; i < pageSize * 2; i++) {
+                for (var i = 0; i < pageSize; i++) {
                     var index = first + i;
                     $scope.data[index] = {id: index, name: 'name ' + index};
                 }
 
-                d.resolve($scope.data.length);
+                d.resolve($scope.data.length * 2);
             }
         });
 
@@ -69,6 +74,28 @@
 
         $scope.update = function () {
             $scope.vscrollContext.container.update();
+        };
+
+        var promise;
+        $scope.down = function(){
+            var element = document.getElementById('vscroll-list');
+            promise = $interval(function() {
+                element.scrollTop = element.scrollTop + 1;
+            }, 100);
+        };
+
+        $scope.up = function(){
+            var element = document.getElementById('vscroll-list');
+            promise = $interval(function() {
+                element.scrollTop = element.scrollTop - 1;
+            }, 200);
+        };
+
+        $scope.release = function(){
+          if(promise) {
+              $interval.cancel(promise);
+              promise = null;
+          }
         };
     }]);
 </script>
