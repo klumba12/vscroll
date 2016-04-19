@@ -206,7 +206,7 @@
 
                 this.scrollEvent = new Event();
                 this.reset = function () {
-                   $element.scrollTop(0);
+                   content.scrollTop = 0;
                 };
 
                 var onScroll =

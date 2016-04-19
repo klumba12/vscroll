@@ -11,6 +11,7 @@
 <body ng-controller="vscrollTest">
 <h2>vscroll test for {{data.length}} items</h2>
 <div>
+    <button ng-click="reset()">reset</button>
     <ul vscroll vscroll-port="vscrollContext" style="height:200px; width:100px; overflow-y: auto; list-style: none;">
         <li vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index">
             {{$index}}: {{item.id}}
@@ -40,5 +41,9 @@
                 d.resolve($scope.data.length);
             }
         });
+
+        $scope.reset = function () {
+          $scope.vscrollContext.container.reset();
+        };
     }]);
 </script>
