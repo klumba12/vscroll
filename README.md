@@ -8,6 +8,8 @@ Code licensed under MIT license.
 
 ## Angular Compatibility
 
+## How it works
+
 ## Developing
 Don't forget to include vscroll module!
 ```javascript
