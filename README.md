@@ -1,4 +1,4 @@
-# VScroll + AngularJs
+# vscroll + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
 ## Licence
@@ -15,13 +15,13 @@ anuglar.module('some-module-name', ['vscroll',...])
 
 ```
 ### Angular controller
-Inject scroll service to controller and invoke it to create vscroll context
+Inject scroll service to controller and invoke it to create vscroll context.
 ```javascript
 var app = angular.module('app', ['vscroll']);
 app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
     $scope.data = [];
     for (var i = 0; i < 200; i++) {
-	    $scope.data[i] = {id: i, name: 'name ' + i};
+	    $scope.data[i] = 'item ' + i;
     }
 
     $scope.vscrollContext = vscroll({threshold: 30});
@@ -29,8 +29,9 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 ```
 ### HTML markup
 Add **vscroll** directive to element with scrollbars
-Add **vscroll-port** directive to the scrollable element
+Add **vscroll-port** directive to scrollable element
 Add **vscroll** filter and **track by $index** into ng-repeat directive
+Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
 ```html
 <div ng-controller="vscrollTest" vscroll>
         <ul vscroll-port="vscrollContext">
