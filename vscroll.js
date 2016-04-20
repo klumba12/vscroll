@@ -133,25 +133,21 @@
                       var deferred = $q.defer();
                       deferred.promise
                           .then(function (count) {
-                             container.count = count;
-
+                             self.count = count;
                              self.force = true;
+
                              self.updateEvent.emit({
                                 force: angular.isUndefined(force) ? true : force
                              });
                           });
 
-                      if(page === 0) {
-                         settings.fetch(
-                             0,
-                             threshold,
-                             deferred);
+                      if (page === 0) {
+                         settings.fetch(0, threshold, deferred);
                       }
-                      else{
-                         settings.fetch(
-                             (prevPage + 1) * threshold - 1,
-                             (page - prevPage) * threshold,
-                             deferred);
+                      else {
+                         var skip = (prevPage + 1) * threshold - 1;
+                         var take = Math.min(self.count - skip, (page - prevPage) * threshold);
+                         settings.fetch(skip, take, deferred);
                       }
 
                    }
@@ -373,8 +369,8 @@
                               function () {
                                  container.cursor = port.update(container.count, e);
                               },
-                              function(){
-                                 if (!$rootScope.$$phase){
+                              function () {
+                                 if (!$rootScope.$$phase) {
                                     scope.$digest();
                                  }
                               });
