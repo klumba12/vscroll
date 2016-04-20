@@ -28,10 +28,10 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 }
 ```
 ### HTML markup
-Add **vscroll** directive to element with scrollbars
-Add **vscroll-port** directive to scrollable element
-Add **vscroll** filter and **track by $index** into ng-repeat directive
-Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
+* Add **vscroll** directive to element with scrollbars
+* Add **vscroll-port** directive to scrollable element
+* Add **vscroll** filter and **track by $index** into ng-repeat directive
+* Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
 ```html
 <div ng-controller="vscrollTest" vscroll>
         <ul vscroll-port="vscrollContext">
