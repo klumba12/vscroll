@@ -137,7 +137,7 @@
                              self.force = true;
 
                              self.updateEvent.emit({
-                                force: angular.isUndefined(force) ? true : force
+                                force: angular.isUndefined(force) ? false : force
                              });
                           });
 
@@ -191,16 +191,17 @@
                  position = container.position,
                  cursor = container.cursor,
                  threshold = settings.threshold,
+                 length = data.length,
                  count = Math.max(container.count, data.length);
 
              container.update(count);
 
-             if (count) {
+             if (length) {
                 if (container.force ||
-                    (cursor <= count && cursor !== position)) {
+                    (cursor <= length && cursor !== position)) {
 
-                   var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), 0),
-                       last = Math.min(cursor + threshold, count);
+                   var first = Math.max(cursor + Math.min(length - (cursor + threshold), 0), 0),
+                       last = Math.min(cursor + threshold, length);
 
                    container.position = cursor;
                    view.length = last - first;
