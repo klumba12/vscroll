@@ -8,7 +8,7 @@ Code licensed under MIT license.
 
 ## Angular Compatibility
 
-Vscroll requires one-time binding to track virtualized elements, thus Angular 1.3+ required with its one-time binding notation e.g. ```html
+Vscroll requires one-time binding to track virtualized elements, thus Angular 1.3+ required with its one-time binding notation e.g. ```
 <div vscroll-row="{{::$index}}"/>
 ```
 
