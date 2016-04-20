@@ -21,6 +21,7 @@
     "test"
   ],
   "dependencies": {
-    "angularjs": "*"
+    "angular": "*",
+    "angular-mocks": "*"
   }
 }
