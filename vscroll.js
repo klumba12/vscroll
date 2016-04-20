@@ -356,7 +356,6 @@
                 var view = ctrls[0],
                     port = ctrls[1],
                     position = null,
-                    settings = context.settings,
                     container = context.container;
 
                 element[0].tabIndex = 0;
