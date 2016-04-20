@@ -47,7 +47,7 @@
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: 32,
-            update: function (skip, take, d) {
+            fetch: function (skip, take, d) {
                 console.log('update requested: skip ' + skip);
                 console.log('update requested: take ' + take);
 

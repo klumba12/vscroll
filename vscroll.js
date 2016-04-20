@@ -101,12 +101,12 @@
           return function (settings) {
              settings = angular.extend({
                 threshold: 64,
-                position: 0,
-                totalCount: 0,
-                update: angular.noop
+                fetch: angular.noop
              }, settings);
 
              var container = {
+                count: 0,
+                position: 0,
                 cursor: 0,
                 page: 0,
                 items: [],
@@ -119,24 +119,21 @@
                    emit();
                 },
 
-                update: function (force) {
+                update: function (count, force) {
                    var self = this,
                        threshold = settings.threshold,
                        cursor = self.cursor,
                        prevPage = self.page,
                        page = Math.ceil((cursor + threshold) / threshold) - 1;
 
+                   self.count = count;
                    if (force || page > prevPage) {
                       self.page = page;
 
                       var deferred = $q.defer();
                       deferred.promise
                           .then(function (count) {
-                             settings.totalCount = count;
-                             if (count === 0) {
-                                self.reset();
-                                return;
-                             }
+                             container.count = count;
 
                              self.force = true;
                              self.updateEvent.emit({
@@ -145,13 +142,13 @@
                           });
 
                       if(page === 0) {
-                         settings.update(
+                         settings.fetch(
                              0,
                              threshold,
                              deferred);
                       }
                       else{
-                         settings.update(
+                         settings.fetch(
                              (prevPage + 1) * threshold - 1,
                              (page - prevPage) * threshold,
                              deferred);
@@ -161,16 +158,18 @@
                 },
 
                 reset: function () {
+                   this.count = 0;
+                   this.position = 0;
                    this.cursor = 0;
                    this.page = 0;
                    this.items = [];
                    this.force = true;
                    this.resetEvent.emit();
-                   this.update(true);
+                   this.update(0, true);
                 }
              };
 
-             container.update(true);
+             container.update(0, true);
 
              return {
                 settings: settings,
@@ -193,21 +192,21 @@
              var settings = context.settings,
                  container = context.container,
                  view = container.items,
-                 position = settings.position,
+                 position = container.position,
                  cursor = container.cursor,
                  threshold = settings.threshold,
-                 totalCount = settings.totalCount;
+                 count = Math.max(container.count, data.length);
 
-             container.update();
+             container.update(count);
 
-             if (totalCount) {
+             if (count) {
                 if (container.force ||
-                    (cursor <= totalCount && cursor !== position)) {
+                    (cursor <= count && cursor !== position)) {
 
-                   var first = Math.max(cursor + Math.min(totalCount - (cursor + threshold), 0), 0),
-                       last = Math.min(cursor + threshold, totalCount);
+                   var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), 0),
+                       last = Math.min(cursor + threshold, count);
 
-                   settings.position = cursor;
+                   container.position = cursor;
                    view.length = last - first;
                    for (var i = first, j = 0; i < last; i++, j++) {
                       view[j] = data[i];
@@ -252,7 +251,7 @@
              }],
           };
        })
-       .directive('vscrollPort', ['$parse', function ($parse) {
+       .directive('vscrollPort', ['$rootScope', '$parse', function ($rootScope, $parse) {
           return {
              restrict: 'A',
              controller: ['$element', function ($element) {
@@ -369,12 +368,16 @@
                 var scrollOff = view.scrollEvent.on(
                     function (e) {
                        position = e;
-                       if (settings.totalCount) {
+                       if (container.count) {
                           container.apply(
                               function () {
-                                 container.cursor = port.update(settings.totalCount, e);
+                                 container.cursor = port.update(container.count, e);
                               },
-                              scope.$digest);
+                              function(){
+                                 if (!$rootScope.$$phase){
+                                    scope.$digest();
+                                 }
+                              });
                        }
                     });
 
@@ -388,7 +391,7 @@
                     function (e) {
                        if (e.force) {
                           if (position) {
-                             container.cursor = port.invalidate(settings.totalCount, position);
+                             container.cursor = port.invalidate(container.count, position);
                           }
                        }
                     });

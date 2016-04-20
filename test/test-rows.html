@@ -5,13 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>vscroll test</title>
     <style>
-        html, body {
-            height: 100%;
+
+        html {
+            position: relative;
+            min-height: 100%;
             overflow: hidden;
         }
 
-        .scroll {
+        body {
             height: 100%;
+        }
+
+        .scroll {
+            width: 100%;
+            height: calc(100%);
+            overflow-x: auto;
+            overflow-y: hidden;
         }
 
         .scroll > table {
@@ -22,38 +31,34 @@
             height: calc(100% - 2px);
             overflow-x: hidden;
             overflow-y: hidden;
+            width: 100%;
+            max-width: 100%;
         }
 
-        .scroll > table > thead {
+        .scroll > table thead {
+            display: block !important;
             width: calc(100% - 0px);
             height: 40px !important;
             overflow: visible;
         }
 
-        .scroll > table > thead tr {
+        .scroll > table thead tr {
+            height: 440px !important;
             display: block;
             width: 100%;
             overflow: hidden;
         }
 
-        .scroll > table > thead,
-        .scroll > table > tbody {
-            display: block !important;
-        }
-
-        .scroll > table > tbody {
+        .scroll > table tbody {
             height: calc(100% - 40px);
             width: calc(100% + 8px);
             overflow-y: auto;
             overflow-x: scroll;
+            display: block !important;
         }
 
-        .scroll > table > tbody > tr {
+        .scroll > table tbody tr {
             width: calc(100% + 8px);
-        }
-
-        .scroll > table > tbody td {
-            word-break: break-all;
         }
 
     </style>
@@ -73,7 +78,7 @@
         <tr vscroll-mark="begin">
             <td colspan="3" style="background: red;"></td>
         </tr>
-        <tr vscroll-row="$index" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
+        <tr vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
             <td>{{item.id}}</td>
             <td>{{::$index}}</td>
             <td>{{item.name}}</td>
@@ -97,15 +102,21 @@
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: threshold,
-            update: function (page, pageSize, d) {
+            fetch: function (page, pageSize, d) {
                 var first = page * threshold;
                 for (var i = 0; i < pageSize; i++) {
                     var index = first + i;
                     $scope.data[index] = {id: index, name: 'name ' + index};
                 }
 
-                d.resolve($scope.data.length);
+                d.resolve(10000);
             }
         });
+
+        $scope.vscrollContext.container.apply = function (f, emit) {
+            f();
+            $scope.$digest();
+        };
+
     }]);
 </script>
