@@ -14,7 +14,7 @@ Don't forget to include vscroll module!
 anuglar.module('some-module-name', ['vscroll',...])
 
 ```
-### Angular controller
+### Controller
 Inject scroll service to controller and invoke it to create vscroll context.
 ```javascript
 var app = angular.module('app', ['vscroll']);
@@ -32,6 +32,8 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 * Add **vscroll-port** directive to scrollable element
 * Add **vscroll** filter and **track by $index** into ng-repeat directive
 * Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
+* Bind **vscroll context** to the **vscroll-port** directive and **vscroll** filter
+* Bind once **$index** to the vscroll-row or vscroll-column directive
 ```html
 <div ng-controller="vscrollTest" vscroll>
         <ul vscroll-port="vscrollContext">
