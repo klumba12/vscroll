@@ -25,8 +25,8 @@
     </div>
     <ul style="list-style: none">
         <li><b>settings.threshold:</b> {{settings.threshold}}</li>
-        <li><b>settings.totalCount:</b> {{settings.totalCount}}</li>
-        <li><b>settings.position:</b> {{settings.position}}</li>
+        <li><b>container.count:</b> {{container.count}}</li>
+        <li><b>container.position:</b> {{container.position}}</li>
         <li><b>container.cursor:</b>{{container.cursor}}</li>
         <li><b>container.page:</b> {{container.page}}</li>
         <li><b>container.force:</b> {{container.force}}</li>
@@ -45,35 +45,21 @@
     var app = angular.module('app', ['vscroll']);
     app.controller('vscrollTest', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
         $scope.data = [];
-        $scope.vscrollContext = vscroll({
-            threshold: 32,
-            update: function (skip, take, d) {
-                console.log('update requested: skip ' + skip);
-                console.log('update requested: take ' + take);
+        for (var i = 0; i < 200; i++) {
+            $scope.data[i] = {id: i, name: 'name ' + i};
+        }
 
-                for (var i = skip; i < skip + take; i++) {
-                    $scope.data[i] = {id: i, name: 'name ' + i};
-                }
-
-                d.resolve(100);
-            }
-        });
+        $scope.vscrollContext = vscroll({threshold: 30});
 
         $scope.settings = $scope.vscrollContext.settings;
         $scope.container = $scope.vscrollContext.container;
-        $scope.container.apply = function (f, emit) {
-            console.log('apply requested');
-
-            f();
-            $scope.$digest();
-        };
 
         $scope.reset = function () {
-            $scope.vscrollContext.container.reset();
+            $scope.container.reset();
         };
 
         $scope.update = function () {
-            $scope.vscrollContext.container.update();
+            $scope.container.update($scope.data.length, true);
         };
 
         var promise;

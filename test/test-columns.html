@@ -41,7 +41,7 @@
         $scope.data = [];
         $scope.vscrollContext = vscroll({
             threshold: threshold,
-            update: function (page, pageSize, d) {
+            fetch: function (page, pageSize, d) {
                 var first = page * threshold;
                 for (var i = 0; i < pageSize; i++) {
                     var index = first + i;
