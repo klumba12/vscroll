@@ -15,16 +15,16 @@ To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, re
 ```html
 <div vscroll-row="{{::$index}}"/>
 ```
-## Developing
+## Contribution
 ###Installation
 `npm install`
 ###Testing
-`npm test`
+`npm test` 
+## Development
 ###Module
 Don't forget to include vscroll module!
 ```javascript
 anuglar.module('some-module-name', ['vscroll',...])
-
 ```
 ###Controller
 Inject scroll service to controller and invoke it to create vscroll context.
