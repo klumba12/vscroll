@@ -25,7 +25,9 @@
     "test"
   ],
   "dependencies": {
-    "angular": "*",
+    "angular": "*"
+  },
+  "devDependencies": {
     "angular-mocks": "*"
   }
 }
