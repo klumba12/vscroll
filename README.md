@@ -1,19 +1,29 @@
 # vscroll + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
+A vscroll can offer performance benefits when working with very large collections. 
+It does so by only rendering and processing a subset of the data which is visible to the user vs. processing the entire list of data. 
+By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
+
 ## Licence
 Code licensed under MIT license.
 
-## Installing
+## Bower
+`bower install vscroll`
 
 ## Angular Compatibility
-
-Vscroll requires one-time binding to track virtualized elements, thus Angular 1.3+ required with its one-time binding notation.
+To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
 <div vscroll-row="{{::$index}}"/>
 ```
 
 ## Developing
+#Installation
+`npm` install
+#Testing
+`npm` test
+""
+#Quick start
 Don't forget to include vscroll module!
 ```javascript
 anuglar.module('some-module-name', ['vscroll',...])
@@ -80,20 +90,9 @@ User should inject service to angular controller and invoke it by passing settin
 ```
 
 ## How it works
-
-There's a problem of rendering large amounts of data using angular, especially, in case of rich user interface, 
-e.g table that consists of thousands of rows or columns and allows filtering.
-Usual Angular approach `ng-repeat="element in elements | filter: filter"` is terribly slow
-because lots of DOM-elements will be removed or added on each filter change.
-
-The idea of vscroll is to render small amount of DOM-elements once 
-and prevent permanent DOM rebuild.
-
 Since only `threshold` of elements is rendered, `$index` in 
 `ng-repeat="item in data | vscroll: vscrollContext track by $index"` expression
 may vary only from 0 to `threshold` 
 and `track by $index` clause doesn't allow to add or delete elements.
 But `ng-repeat` still tracks collection returned by `vscroll` filter
 which is changed when data container is scrolled.
-
-## Karma
