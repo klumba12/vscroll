@@ -6,7 +6,7 @@ It does so by only rendering and processing a subset of the data which is visibl
 By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
 ##Licence
 Code licensed under MIT license.
-## Example page
+## Example Page
 
 ##Bower
 `bower install vscroll`
@@ -17,10 +17,9 @@ To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, re
 ```
 ## Developing
 ###Installation
-`npm` install
+`npm install`
 ###Testing
-`npm` test
-""
+`npm test`
 ###Module
 Don't forget to include vscroll module!
 ```javascript
