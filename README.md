@@ -1,7 +1,7 @@
 # vscroll + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
-A vscroll can offer performance benefits when working with very large collections. 
+vscroll can offer performance benefits when working with very large collections. 
 It does so by only rendering and processing a subset of the data which is visible to the user vs. processing the entire list of data. 
 By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
 
@@ -18,12 +18,12 @@ To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, re
 ```
 
 ## Developing
-#Installation
+###Installation
 `npm` install
-#Testing
+###Testing
 `npm` test
 ""
-#Quick start
+###Quick start
 Don't forget to include vscroll module!
 ```javascript
 anuglar.module('some-module-name', ['vscroll',...])
