@@ -90,3 +90,13 @@ may vary only from 0 to `threshold`
 and `track by $index` clause doesn't allow to add or delete elements.
 But `ng-repeat` still tracks collection returned by `vscroll` filter
 which is changed when data container is scrolled.
+
+We believe, that core concept of `vscroll` is simplicity. 
+We don't implement complex transclusions or our own `ng-repeat`, we just use Angular's native tools.
+We don't change elements, we change collection, and Angular is responsible for the rest.
+
+Internally `vscroll` stores list of heights of top elements for two things: 
+1. It adds padding on top of container, so it looks like list really scrolls down 
+(in fact, there is always limited amount of elements with increasing offset).
+2. It calculates lower and upper index of collection (viewport), 
+that must be returned to `ng-repeat` and rendered.
