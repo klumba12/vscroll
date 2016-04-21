@@ -37,11 +37,11 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
 User should inject service to angular controller and invoke it by passing settings object
 ```javascript
-$scope.context = vscroll({
+{
 	/**
-	 * The number defines how many items will be materialized to dom elements.
-	 * @default 64.
-	 */
+ 	* The number defines how many items will be materialized to dom elements.
+ 	* @default 64.
+ 	*/
 	threshold: 30,
 
 	/**
@@ -58,7 +58,7 @@ $scope.context = vscroll({
                	d.resolve(data.length);
             });
         }		
-	});
+}
 ```
 
 ### HTML markup
