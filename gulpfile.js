@@ -9,6 +9,8 @@ gulp.task('test', function () {
 });
 
 gulp.task('watch', function() {
+    gulp.run('test');
+    
     gulp.watch(['vscroll.js', 'test/*.js'], function() {
         gulp.run('test');
     });  
