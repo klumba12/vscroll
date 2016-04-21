@@ -36,7 +36,6 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 ### API
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
 User should inject service to angular controller and invoke it by passing settings object
-with next optional parameters
 ```javascript
 $scope.context = vscroll({
 	/**
@@ -60,6 +59,7 @@ $scope.context = vscroll({
             });
         }		
 	});
+```
 
 ### HTML markup
 * Add **vscroll** directive to element with scrollbars
