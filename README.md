@@ -34,28 +34,32 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 ```
 
 ### API
-Configuration object, passed to vscroll service in controller has following interface.
+vscroll service returns instance that connects user settings, scroll port and scroll filter.
+User should inject service to angular controller and invoke it by passing settings object
+with next optional parameters
+```javascript
+$scope.context = vscroll({
+	/**
+	 * The number defines how many items will be materialized to dom elements.
+	 * @default 64.
+	 */
+	threshold: 30,
 
-#### threshold
-Type: `Number`
-
-Default: 64
-
-Virtualization threshold. Defines, how many items have to be returned by vscroll filter. 
-
-
-#### fetch
-Type: `Function(skip, take, deferred)`
-
-Default: `angular.noop`
-
-Function for fetching new data page. Invoked when container scroll is near the bottom.
-
-`skip: Number` - how many elements should be skipped for fetching.
-
-`take: Number` - max amount of elements that must be returned.
-
-`deferred` - promise, that must be resolved or rejected when data is fetched. 
+	/**
+	 * The function defines method of getting data for next page of infinite scroll.		
+	 * @param {number} skip How many elements should by skipped to get next page.
+	 * @param {number} take Size of next page.
+	 * @param {deffered} deferred Deffered object that should be resolved with total number of items.
+	 * @default angular.noop
+	 */
+	fetch: function (skip, take, d) {
+        getSomeData(skip, take)
+          	.success(function(data){
+               	$scope.data = data;
+               	d.resolve(data.length);
+            });
+        }		
+	});
 
 ### HTML markup
 * Add **vscroll** directive to element with scrollbars
