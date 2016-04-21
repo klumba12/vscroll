@@ -1,35 +1,33 @@
-# vscroll + angularjs
+#vscroll + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
 vscroll can offer performance benefits when working with very large collections. 
 It does so by only rendering and processing a subset of the data which is visible to the user vs. processing the entire list of data. 
 By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
-
-## Licence
+##Licence
 Code licensed under MIT license.
+## Example page
 
-## Bower
+##Bower
 `bower install vscroll`
-
 ## Angular Compatibility
 To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
 <div vscroll-row="{{::$index}}"/>
 ```
-
 ## Developing
 ###Installation
 `npm` install
 ###Testing
 `npm` test
 ""
-###Quick start
+###Module
 Don't forget to include vscroll module!
 ```javascript
 anuglar.module('some-module-name', ['vscroll',...])
 
 ```
-### Controller
+###Controller
 Inject scroll service to controller and invoke it to create vscroll context.
 ```javascript
 var app = angular.module('app', ['vscroll']);
@@ -42,8 +40,7 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
     $scope.vscrollContext = vscroll({threshold: 30});
 }
 ```
-
-### API
+###API
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
 User should inject service to angular controller and invoke it by passing settings object
 ```javascript
@@ -70,8 +67,7 @@ User should inject service to angular controller and invoke it by passing settin
         }		
 }
 ```
-
-### HTML markup
+###HTML markup
 * Add **vscroll** directive to element with scrollbars
 * Add **vscroll-port** directive to scrollable element
 * Add **vscroll** filter and **track by $index** into ng-repeat directive
@@ -88,8 +84,7 @@ User should inject service to angular controller and invoke it by passing settin
         </ul>
     </div>
 ```
-
-## How it works
+##How it works
 Since only `threshold` of elements is rendered, `$index` in 
 `ng-repeat="item in data | vscroll: vscrollContext track by $index"` expression
 may vary only from 0 to `threshold` 
