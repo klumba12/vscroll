@@ -28,11 +28,67 @@
             <li><a href="https://github.com/klumba12/vscroll">View On <strong>GitHub</strong></a></li>
         </ul>
     </header>
+    <section>
+        <h3>List</h3>
+        <button ng-click="reset()">reset</button>
+        <button ng-click="update()">update</button>
+        <button ng-mousedown="up()" ng-mouseup="release()">&uparrow;</button>
+        <button ng-mousedown="down()" ng-mouseup="release()">&downarrow;</button>
+        <div id="vscroll-list" vscroll style="height:500px; width: 200px; overflow-y: auto;margin:16px;">
+            <ul vscroll-port="vscrollContext" style="list-style: none;margin:0;">
+                <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index"
+                    style="height: 20px;">
+                    {{$index}}: {{item.id}}
+                </li>
+            </ul>
+        </div>
+    </section>
     <footer>
 
     </footer>
 </div>
 <script src="javascripts/scale.fix.js"></script>
 
+<script src="https://github.com/klumba12/vscroll/blob/master/vscroll.js"></script>
+<script src="https://code.angularjs.org/1.5.4/angular.js"></script>
+
+<script language="javascript">
+    var app = angular.module('app', ['vscroll']);
+
+    app.controller('vscrollList', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
+        $scope.data = [];
+        for (var i = 0; i < 200; i++) {
+            $scope.data[i] = {id: i, name: 'name ' + i};
+        }
+        $scope.vscrollContext = vscroll({threshold: 30});
+        $scope.settings = $scope.vscrollContext.settings;
+        $scope.container = $scope.vscrollContext.container;
+        $scope.reset = function () {
+            $scope.container.reset();
+        };
+        $scope.update = function () {
+            $scope.container.update($scope.data.length, true);
+        };
+        var promise;
+        $scope.down = function () {
+            var element = document.getElementById('vscroll-list');
+            promise = $interval(function () {
+                element.scrollTop = element.scrollTop + 1;
+            }, 100);
+        };
+        $scope.up = function () {
+            var element = document.getElementById('vscroll-list');
+            promise = $interval(function () {
+                element.scrollTop = element.scrollTop - 1;
+            }, 100);
+        };
+        $scope.release = function () {
+            if (promise) {
+                $interval.cancel(promise);
+                promise = null;
+            }
+        };
+    }]);
+</script>
 </body>
 </html>
