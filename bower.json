@@ -4,14 +4,18 @@
   "version": "0.9.0",
   "homepage": "https://github.com/klumba12/vscroll",
   "authors": [
-    "klumba12 <dimitry.sitnov@gmail.com>"
+    "Dmitry <dimitry.sitnov@gmail.com>"
+    "Valentin <kor.val@inbox.ru>"
   ],
   "description": "virtual scrolling for web collections",
   "keywords": [
+    "vscroll",
     "virtual",
     "scroll",
     "collection",
-    "angularjs"
+    "ng-repeat",
+    "angularjs",
+    "angular",
   ],
   "license": "MIT",
   "ignore": [
