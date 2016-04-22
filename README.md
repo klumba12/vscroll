@@ -10,7 +10,6 @@ Code licensed under MIT license.
 http://klumba12.github.io/vscroll/
 ##Installing via Bower
 `bower install vscroll`
-```
 ## Development
 To setup development environment make sure that npm is installed on your machine, after that just execute npm command for the project.
 `npm install`
