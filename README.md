@@ -7,7 +7,7 @@ By creating only DOM elements for the visible items, this can greatly reduce the
 ##Licence
 Code licensed under MIT license.
 ## Examples
-(http://klumba12.github.io/vscroll/)
+http://klumba12.github.io/vscroll/
 ##Installing via Bower
 `bower install vscroll`
 ```
