@@ -11,7 +11,7 @@ http://klumba12.github.io/vscroll/
 ##Installing via Bower
 `bower install vscroll`
 ## Development
-To setup development environment make sure that npm is installed on your machine, after that just execute npm command for the project.
+To setup development environment make sure that npm is installed on your machine, after that just execute npm command for the project.  
 `npm install`
 ## Get Started
 ###Module
@@ -78,7 +78,7 @@ vscroll({
 ```
 ##Testing
 We use phantomjs and jasmine to ensure quality of the code.
-The easiest way to run these asserts is to use npm command for the project.  
+The easiest way to run these asserts is to use npm command for the project.
 `npm test`
 ##How it works
 Since only `threshold` of elements is rendered, `$index` in 
