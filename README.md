@@ -6,21 +6,15 @@ It does so by only rendering and processing a subset of the data which is visibl
 By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
 ##Licence
 Code licensed under MIT license.
-## Example Page
-
-##Bower
+## Examples
+(http://klumba12.github.io/vscroll/)
+##Installing via Bower
 `bower install vscroll`
-## Angular Compatibility
-To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
-```html
-<div vscroll-row="{{::$index}}"/>
 ```
-## Contribution
-###Installation
-`npm install`
-###Testing
-`npm test` 
 ## Development
+To setup development environment make sure that npm is installed on your machine, after that just execute npm command for the project.
+`npm install`
+## Get Started
 ###Module
 Don't forget to include vscroll module!
 ```javascript
@@ -43,7 +37,7 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
 User should inject service to angular controller and invoke it by passing settings object
 ```javascript
-{
+vscroll({
 	/**
  	* The number defines how many items will be materialized to dom elements.
  	* @default 64.
@@ -64,7 +58,7 @@ User should inject service to angular controller and invoke it by passing settin
                	d.resolve(data.length);
             });
         }		
-}
+})
 ```
 ###HTML markup
 * Add **vscroll** directive to element with scrollbars
@@ -83,6 +77,10 @@ User should inject service to angular controller and invoke it by passing settin
         </ul>
     </div>
 ```
+##Testing
+We use phantomjs and jasmine to ensure quality of the code.
+The easiest way to run these asserts is to use npm command for the project.
+`npm test`
 ##How it works
 Since only `threshold` of elements is rendered, `$index` in 
 `ng-repeat="item in data | vscroll: vscrollContext track by $index"` expression
@@ -100,3 +98,7 @@ Internally `vscroll` stores list of heights of top elements for two things:
 (in fact, there is always limited amount of elements with increasing offset).
 2. It calculates lower and upper index of collection (viewport), 
 that must be returned to `ng-repeat` and rendered.
+## Angular Compatibility
+To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
+```html
+<div vscroll-row="{{::$index}}"/>
