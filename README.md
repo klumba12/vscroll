@@ -78,7 +78,7 @@ vscroll({
 ```
 ##Testing
 We use phantomjs and jasmine to ensure quality of the code.
-The easiest way to run these asserts is to use npm command for the project.
+The easiest way to run these asserts is to use npm command for the project.  
 `npm test`
 ##How it works
 Since only `threshold` of elements is rendered, `$index` in 
