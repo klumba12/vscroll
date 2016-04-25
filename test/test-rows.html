@@ -1,122 +1,55 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="app">
+<html ng-app="app">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>vscroll test</title>
-    <style>
-
-        html {
-            position: relative;
-            min-height: 100%;
-            overflow: hidden;
-        }
-
-        body {
-            height: 100%;
-        }
-
-        .scroll {
-            width: 100%;
-            height: calc(100%);
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
-
-        .scroll > table {
-            display: block;
-            padding-right: 8px;
-            margin-bottom: 0 !important;
-            height: 100%;
-            height: calc(100% - 2px);
-            overflow-x: hidden;
-            overflow-y: hidden;
-            width: 100%;
-            max-width: 100%;
-        }
-
-        .scroll > table thead {
-            display: block !important;
-            width: calc(100% - 0px);
-            height: 40px !important;
-            overflow: visible;
-        }
-
-        .scroll > table thead tr {
-            height: 440px !important;
-            display: block;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .scroll > table tbody {
-            height: calc(100% - 40px);
-            width: calc(100% + 8px);
-            overflow-y: auto;
-            overflow-x: scroll;
-            display: block !important;
-        }
-
-        .scroll > table tbody tr {
-            width: calc(100% + 8px);
-        }
-
-    </style>
+    <script src="../bower_components/angular/angular.js"></script>
+    <script src="../vscroll.js"></script>
 </head>
-<body ng-controller="vscrollTest">
-<h2>vscroll test for {{data.length}} items</h2>
-<div class="scroll">
-    <table>
-        <thead>
-        <tr>
-            <th style="width: 100px;">id</th>
-            <th style="width: 200px;">$index</th>
-            <th style="width: 300px;">name</th>
-        </tr>
-        </thead>
-        <tbody vscroll vscroll-port="vscrollContext">
-        <tr vscroll-mark="begin">
-            <td colspan="3" style="background: red;"></td>
-        </tr>
-        <tr vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index ">
-            <td>{{item.id}}</td>
-            <td>{{::$index}}</td>
-            <td>{{item.name}}</td>
-        </tr>
-        <tr vscroll-mark="end">
-            <td colspan="3" style="background: blue;"></td>
-        </tr>
-        </tbody>
-    </table>
-</div>
-</body>
-</html>
 
-<script src="https://code.angularjs.org/1.5.4/angular.js"></script>
-<script src="../vscroll.js"></script>
+<body ng-controller="vscrollList">
+
+<div vscroll style="height:300px; width: 100%; overflow-y: auto;">
+    <ul vscroll-port="vscrollContext" style="list-style: none;margin:0;padding:0;">
+        <li vscroll-mark="top"></li>
+        <li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index" style="color: #{{item.color}}; width: 100%; height: {{item.height}}px; background-color: #{{item.code}}">
+            {{item.height}}px: #{{item.code}}
+        </li>
+        <li vscroll-mark="bottom"></li>
+    </ul>
+</div>
+
 <script language="javascript">
     var app = angular.module('app', ['vscroll']);
-    app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
-        var threshold = 50;
-
+    app.controller('vscrollList', ['$scope', 'vscroll', function($scope, vscroll) {
         $scope.data = [];
-        $scope.vscrollContext = vscroll({
-            threshold: threshold,
-            fetch: function (page, pageSize, d) {
-                var first = page * threshold;
-                for (var i = 0; i < pageSize; i++) {
-                    var index = first + i;
-                    $scope.data[index] = {id: index, name: 'name ' + index};
-                }
 
-                d.resolve(10000);
-            }
-        });
+        var isLight = function(hexcolor) {
+            var r = (hexcolor >> 16) & 0xFF,
+                    g = (hexcolor >> 8) & 0xFF,
+                    b = hexcolor & 0xFF;
 
-        $scope.vscrollContext.container.apply = function (f, emit) {
-            f();
-            $scope.$digest();
+            var a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return (a < 0.5);
         };
+
+        for (var i = 0; i < 200; i++) {
+            var code = Math.floor(Math.random() * 16777215);
+            $scope.data[i] = {
+                height: 20 + Math.round(Math.random() * 100),
+                code: code.toString(16),
+                color: isLight(code) ? '000' : 'fff'
+            };
+        }
+
+        $scope.vscrollContext = vscroll({
+            threshold: 30
+        });
 
     }]);
 </script>
+</body>
+
+</html>

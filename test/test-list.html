@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <title>vscroll test</title>
-    <style>
-
-    </style>
+    <script src="../bower_components/angular/angular.js"></script>
+    <script src="../vscroll.js"></script>
 </head>
 <body ng-controller="vscrollTest">
 <h2>vscroll test for {{data.length}} items</h2>
@@ -39,8 +38,6 @@
 </body>
 </html>
 
-<script src="https://code.angularjs.org/1.5.4/angular.js"></script>
-<script src="../vscroll.js"></script>
 <script language="javascript">
     var app = angular.module('app', ['vscroll']);
     app.controller('vscrollTest', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
