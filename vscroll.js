@@ -65,12 +65,6 @@
              cursor = offsets.length,
              diff = Math.min(count, threshold + index) - cursor;
 
-         // console.log('count ' + count);
-         // console.log('count - threshold ' + (count - threshold));
-         // console.log('threshold + index ' + (threshold + index));
-         // console.log('index ' + index);
-         // console.log('diff ' + diff);
-         // console.log('------');
          for (var i = threshold - diff; i < threshold; i++) {
             var value = items[i]();
             if (cursor === 0) {
@@ -209,9 +203,6 @@
 
                    var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor),
                        last = Math.min(cursor + threshold, count);
-
-                   console.log('first: ' + first);
-                   console.log('last: ' + last);
 
                    container.position = cursor;
                    view.length = last - first;
