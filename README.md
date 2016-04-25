@@ -92,10 +92,10 @@ We don't change elements, we change collection, and angular is responsible for t
 We force to use `track by $index` expression to make angular think that collection is constant and there is no need to recreate dom elements.
 
 `vscroll` core principles:
-1. To store list of element offsets from the top/left container side.
-2. To understand which elements should be displayed(thanks to binary search in offsets).
-3. To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements).
-4. To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll).
+* To store list of element offsets from the top/left container side.
+* To understand which elements should be displayed(thanks to binary search in offsets).
+* To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements).
+* To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll).
 ## Angular Compatibility
 To get maximum performance benefits from vscroll, anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
