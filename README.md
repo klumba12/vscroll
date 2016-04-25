@@ -96,6 +96,7 @@ We force to use `track by $index` expression to make angular think that collecti
 * To understand which elements should be displayed(thanks to binary search in offsets).
 * To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements).
 * To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll).
+
 ## Angular Compatibility
 To get maximum performance benefits from vscroll, anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html

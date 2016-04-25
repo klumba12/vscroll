@@ -282,8 +282,8 @@
                          };
 
                          moveT = function (top, bottom) {
-                            move('top', top);
-                            move('bottom', bottom);
+                            move('top', 'height', top);
+                            move('bottom', 'height', bottom);
                          };
                          break;
                       case 'column':
@@ -292,8 +292,8 @@
                          };
 
                          moveT = function (left, right) {
-                            move('left', left);
-                            move('right', right);
+                            move('left', 'width', left);
+                            move('right', 'width', right);
                          };
                          break;
                       default:
@@ -304,20 +304,13 @@
                    return true;
                 };
 
-                var move = function (dir, value) {
-                   var element;
-                   if (self.markup.hasOwnProperty(dir)) {
-                      element = self.markup[dir];
-                      
-                      if (type === 'row') {
-                          element.css('height', value + 'px');
-                      } else {
-                          element.css('width', value + 'px');
-                      }
-                        
+                var move = function (pos, dim, value) {
+                   if (self.markup.hasOwnProperty(pos)) {
+                      var element = self.markup[pos];
+                      element.css(dim, value + 'px');
                    } else {
-                      element = $element;
-                      element.css('padding-' + dir, value + 'px');
+                      var element = $element;
+                      element.css('padding-' + pos, value + 'px');
                    }
                 };
 
