@@ -20,11 +20,13 @@
                     </th>
                 </tr>
             </thead>
-            <tbody vscroll-port="{row: rowsContext, colum: columnsContext}">
+            <tbody vscroll-port="{row: rowsContext, column: columnsContext}">
                 <tr vscroll-mark="top" style="padding-top: 60px">
                     <td colspan="4"></td>
                 </tr>
-                <tr vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: rowsContext track by $index" style="color: #{{item.color}}; height: {{item.height}}px; background-color: #{{item.code}}">
+                <tr vscroll-row="{{::$index}}" 
+                    ng-repeat="item in data | vscroll: rowsContext track by $index" 
+                    style="color: #{{item.color}}; height: {{item.height}}px; background-color: #{{item.code}}">
                     <td>{{item.index}}</td>
                     <td vscroll-column="{$index}" ng-repeat="column in item.columns | vscroll: columnsContext track by $index">
                         {{item[column]}}
