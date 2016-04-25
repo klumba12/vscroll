@@ -92,14 +92,13 @@ But `ng-repeat` still tracks collection returned by `vscroll` filter
 which is changed when data container is scrolled.
 
 We believe, that core concept of `vscroll` is simplicity. 
-We don't implement complex transclusions or our own `ng-repeat`, we just use Angular's native tools.
+We don't implement complex transclusions or our own `ng-repeat` directive, we just use Angular's native tools.
 We don't change elements, we change collection, and Angular is responsible for the rest.
 
-Internally `vscroll` stores list of heights of top elements for two things: 
-1. It adds padding on top of container, so it looks like list really scrolls down 
-(in fact, there is always limited amount of elements with increasing offset).
-2. It calculates lower and upper index of collection (viewport), 
-that must be returned to `ng-repeat` and rendered.
+1. `vscroll` stores list of element offsets from the top/left container side.
+2. `vscroll` can understand which elements should be displayed thanks to the offsets.
+3. `vscroll` calculates lower and upper indexes for collection, that will be returned to `ng-repeat` by `vscroll` filter and rendered by angular.
+4. `vscroll` adds paddings to top/bottom or left/right container sides, so it looks like list really scrolls vertically/horizontally.
 ## Angular Compatibility
 To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
