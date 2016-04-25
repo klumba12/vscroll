@@ -258,13 +258,54 @@
                     max = 0,
                     offsets = [],
                     position = {index: 0, offset: 0, value: 0},
-                    invalidate = invalidateFactory(items);
+                    invalidate = invalidateFactory(items),
+                    moveT = angular.noop,
+                    getPositionT = angular.noop;
 
                 //
                 // TODO: refactor type
                 //
 
                 self.markup = {};
+
+                var setupT = function (kind) {
+                   if (type) {
+                      if (kind !== type) {
+                         throw new Error('Can\'t use vscroll-' + kind + ' with vscroll-' + type);
+                      }
+
+                      return false;
+                   }
+
+                   type = kind;
+                   switch (type) {
+                      case 'row':
+                         getPositionT = function (offsets, view) {
+                            return getPosition(offsets, view.top);
+                         };
+
+                         moveT = function (top, bottom) {
+                            move('top', top);
+                            move('bottom', bottom);
+                         };
+                         break;
+                      case 'column':
+                         getPositionT = function (offsets, view) {
+                            return getPosition(offsets, view.left);
+                         };
+
+                         moveT = function (left, right) {
+                            move('left', left);
+                            move('right', right);
+                         };
+                         break;
+                      default:
+                         throw Error('Invalid type vscroll-' + kind);
+
+                   }
+
+                   return true;
+                };
 
                 var move = function (dir, value) {
                    var element = null;
@@ -280,27 +321,14 @@
 
                 this.update = function (count, view) {
                    invalidate(offsets, position.index, count);
-                   position = getPosition(offsets, type == 'row' ? view.top : view.left);
+                   position = getPositionT(offsets, view);
 
                    var offset = position.value - position.offset;
                    if (offset >= 0) {
                       max = Math.max(max, position.offset);
-                      switch (type) {
-                         case 'row':
-                            var top = Math.max(0, position.value - offset);
-                            var bottom = Math.max(0, max - top)
-                            move('top', top);
-                            move('bottom', bottom);
-                            break;
-                         case 'column':
-                            var left = Math.max(0, position.value - offset);
-                            var right = Math.max(0, max - left)
-                            move('left', left);
-                            move('right', right);
-                            break;
-                         default:
-                            throw  Error('Invalid type ' + type);
-                      }
+                      var side1 = Math.max(0, position.value - offset);
+                      var side2 = Math.max(0, max - side1);
+                      moveT(side1, side2);
                    }
 
                    return position.index;
@@ -315,26 +343,16 @@
                    max = 0;
                    offsets = [];
                    position = {index: 0, offset: 0, value: 0};
-
-                   switch (type) {
-                      case 'row':
-                         move('top', 0);
-                         move('bottom', 0);
-                         break;
-                      case 'column':
-                         move('left', 0);
-                         move('right', 0);
-                         break;
-                   }
+                   moveT(0, 0);
                 };
 
                 this.setRow = function (index, element) {
-                   type = 'row';
+                   setupT('row');
                    items[index] = element;
                 };
 
                 this.setColumn = function (index, element) {
-                   type = 'column';
+                   setupT('column');
                    items[index] = element;
                 };
 
