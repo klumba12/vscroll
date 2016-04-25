@@ -308,12 +308,17 @@
                    var element;
                    if (self.markup.hasOwnProperty(dir)) {
                       element = self.markup[dir];
-                   }
-                   else {
+                      
+                      if (type === 'row') {
+                          element.css('height', value + 'px');
+                      } else {
+                          element.css('width', value + 'px');
+                      }
+                        
+                   } else {
                       element = $element;
+                      element.css('padding-' + dir, value + 'px');
                    }
-
-                   element.css('padding-' + dir, value + 'px');
                 };
 
                 this.update = function (count, view) {
