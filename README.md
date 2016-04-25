@@ -60,7 +60,7 @@ vscroll({
 })
 ```
 ###HTML markup
-* Add **vscroll** directive to element with scrollbars
+* Add **vscroll** directive to element with scroll bars
 * Add **vscroll-port** directive to scrollable element
 * Add **vscroll** filter and **track by $index** into ng-repeat directive
 * Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
@@ -88,16 +88,16 @@ We believe, that core concept of `vscroll` is simplicity.
 We don't implement complex transclusions or our own `ng-repeat` directive, we just use angular's native tools.
 We don't change elements, we change collection, and angular is responsible for the rest.
 
-`vscroll` filter returns to `ng-repeat` expression ~`threshold` number of elements.  
-We force to use `track by $index` expression to make angular think that collection is constant
-and there is no need to recreate dom elements.
+`vscroll` filter returns to `ng-repeat` expression ~`threshold` number of elements.
+We force to use `track by $index` expression to make angular think that collection is constant and there is no need to recreate dom elements.
 
 `vscroll` core principles:
-1. To store list of element offsets from the top/left container side
-2. To understand which elements should be displayed(thanks to binary search in offsets)
-3. To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements)
-4. To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll)
+1. To store list of element offsets from the top/left container side.
+2. To understand which elements should be displayed(thanks to binary search in offsets).
+3. To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements).
+4. To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll).
 ## Angular Compatibility
-To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
+To get maximum performance benefits from vscroll, anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
 <div vscroll-row="{{::$index}}"/>
+```
