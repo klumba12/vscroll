@@ -51,7 +51,10 @@ vscroll({
         getSomeData(skip, take)
           	.success(function(data){
                	$scope.data = data;
-               	d.resolve(data.length);
+               	// if you don't know total number of items
+               	// you can use "+ take" expression,
+               	// it says that next page can be fetched
+               	d.resolve(data.length + take);
             });
         }		
 })
