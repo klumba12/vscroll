@@ -63,8 +63,14 @@
       return function (offsets, index, count) {
          var threshold = items.length,
              cursor = offsets.length,
-             diff = Math.min(count - threshold, threshold + index) - cursor;
+             diff = Math.min(count, threshold + index) - cursor;
 
+         // console.log('count ' + count);
+         // console.log('count - threshold ' + (count - threshold));
+         // console.log('threshold + index ' + (threshold + index));
+         // console.log('index ' + index);
+         // console.log('diff ' + diff);
+         // console.log('------');
          for (var i = threshold - diff; i < threshold; i++) {
             var value = items[i]();
             if (cursor === 0) {
@@ -106,6 +112,7 @@
 
              var container = {
                 count: 0,
+                total: 0,
                 position: 0,
                 cursor: 0,
                 page: 0,
@@ -127,13 +134,14 @@
                        page = Math.ceil((cursor + threshold) / threshold) - 1;
 
                    self.count = count;
+                   self.total = Math.max(self.total, count);
                    if (force || page > prevPage) {
                       self.page = page;
 
                       var deferred = $q.defer();
                       deferred.promise
                           .then(function (count) {
-                             self.count = count;
+                             self.total = count;
                              self.force = true;
 
                              self.updateEvent.emit({
@@ -146,7 +154,7 @@
                       }
                       else {
                          var skip = (prevPage + 1) * threshold - 1;
-                         var take = Math.min(self.count - skip, (page - prevPage) * threshold);
+                         var take = Math.min(self.total - skip, (page - prevPage) * threshold);
                          settings.fetch(skip, take, deferred);
                       }
 
@@ -191,17 +199,19 @@
                  position = container.position,
                  cursor = container.cursor,
                  threshold = settings.threshold,
-                 length = data.length,
-                 count = Math.max(container.count, data.length);
+                 count = data.length;
 
              container.update(count);
 
-             if (length) {
+             if (count) {
                 if (container.force ||
-                    (cursor <= length && cursor !== position)) {
+                    (cursor <= count && cursor !== position)) {
 
-                   var first = Math.max(cursor + Math.min(length - (cursor + threshold), 0), 0),
-                       last = Math.min(cursor + threshold, length);
+                   var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor),
+                       last = Math.min(cursor + threshold, count);
+
+                   console.log('first: ' + first);
+                   console.log('last: ' + last);
 
                    container.position = cursor;
                    view.length = last - first;
@@ -231,7 +241,7 @@
                 };
 
                 var onScroll =
-                    function (e) {
+                    function () {
                        self.scrollEvent.emit({
                           width: content.scrollWidth,
                           height: content.scrollHeight,
@@ -261,10 +271,6 @@
                     invalidate = invalidateFactory(items),
                     moveT = angular.noop,
                     getPositionT = angular.noop;
-
-                //
-                // TODO: refactor type
-                //
 
                 self.markup = {};
 
@@ -308,7 +314,7 @@
                 };
 
                 var move = function (dir, value) {
-                   var element = null;
+                   var element;
                    if (self.markup.hasOwnProperty(dir)) {
                       element = self.markup[dir];
                    }
@@ -326,9 +332,9 @@
                    var offset = position.value - position.offset;
                    if (offset >= 0) {
                       max = Math.max(max, position.offset);
-                      var side1 = Math.max(0, position.value - offset);
-                      var side2 = Math.max(0, max - side1);
-                      moveT(side1, side2);
+                      var frame1 = Math.max(0, position.value - offset);
+                      var frame2 = Math.max(0, max - frame1);
+                      moveT(frame1, frame2);
                    }
 
                    return position.index;
@@ -356,12 +362,20 @@
                    items[index] = element;
                 };
 
-                this.removeRow = function (index) {
-                   items[index] = null;
-                };
+                this.remove = function (index) {
+                   if (index === 0) {
+                      items.shift();
+                      return;
+                   }
 
-                this.removeColumn = function (index) {
-                   items[index] = null;
+                   var lastIndex = items.length - 1;
+                   if (index === lastIndex) {
+                      items.pop();
+                      return;
+                   }
+
+                   // TODO: think how to avoid this
+                   items[i] = null;
                 };
              }],
              require: ['^vscroll', 'vscrollPort'],
@@ -438,7 +452,7 @@
                 port.setRow(index, size);
 
                 scope.$on('$destroy', function () {
-                   port.removeRow(index);
+                   port.remove(index);
                 });
              }
           };
@@ -461,7 +475,7 @@
                 port.setColumn(index, size);
 
                 scope.$on('$destroy', function () {
-                   port.removeColumn(index);
+                   port.remove(index);
                 });
              }
           };
