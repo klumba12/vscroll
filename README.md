@@ -84,21 +84,19 @@ We use phantomjs and jasmine to ensure quality of the code.
 The easiest way to run these asserts is to use npm command for the project.  
 `npm test`
 ##How it works
-Since only `threshold` of elements is rendered, `$index` in 
-`ng-repeat="item in data | vscroll: vscrollContext track by $index"` expression
-may vary only from 0 to `threshold` 
-and `track by $index` clause doesn't allow to add or delete elements.
-But `ng-repeat` still tracks collection returned by `vscroll` filter
-which is changed when data container is scrolled.
+We believe, that core concept of `vscroll` is simplicity.
+We don't implement complex transclusions or our own `ng-repeat` directive, we just use angular's native tools.
+We don't change elements, we change collection, and angular is responsible for the rest.
 
-We believe, that core concept of `vscroll` is simplicity. 
-We don't implement complex transclusions or our own `ng-repeat` directive, we just use Angular's native tools.
-We don't change elements, we change collection, and Angular is responsible for the rest.
+`vscroll` filter returns to `ng-repeat` expression ~`threshold` number of elements.
+We force to use `track by $index` expression to make angular think that collection is constant
+and there is no need to recreate dom elements.
 
-1. `vscroll` stores list of element offsets from the top/left container side.
-2. `vscroll` can understand which elements should be displayed thanks to the offsets.
-3. `vscroll` calculates lower and upper indexes for collection, that will be returned to `ng-repeat` by `vscroll` filter and rendered by angular.
-4. `vscroll` adds paddings to top/bottom or left/right container sides, so it looks like list really scrolls vertically/horizontally.
+`vscroll` core principles:
+1. To store list of element offsets from the top/left container side.
+2. To understand which elements should be displayed(thanks to binary search in offsets).
+3. To calculate lower and upper indexes for collection(return to `ng-repeat` window of elements).
+4. To add paddings to top/bottom or left/right container sides(emulate vertically/horizontally scroll).
 ## Angular Compatibility
 To get maximum perfomance benefits from vscroll, Anuglar 1.3+ should be used, regarding to one-time binding support,
 ```html
