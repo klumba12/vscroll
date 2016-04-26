@@ -68,7 +68,7 @@ vscroll({
 * Bind once **$index** to the vscroll-row or vscroll-column directive
 ```html
 <div ng-controller="vscrollTest" vscroll>
-        <ul vscroll-port-x="vscrollContext">
+        <ul vscroll-port-y="vscrollContext">
             <li vscroll-row="{{::$index}}" 
             	ng-repeat="item in data | vscroll: vscrollContext track by $index">
                {{$item}}
