@@ -61,14 +61,14 @@ vscroll({
 ```
 ###HTML markup
 * Add **vscroll** directive to element with scroll bars
-* Add **vscroll-port** directive to scrollable element
+* Add **vscroll-port-(x|y)** directive to scrollable element
 * Add **vscroll** filter and **track by $index** into ng-repeat directive
 * Add **vscroll-row** or **vscroll-column** to the repeated element that will be virtualized
-* Bind **vscroll context** to the **vscroll-port** directive and **vscroll** filter
+* Bind **vscroll context** to the **vscroll-port-(x|y)** directive and **vscroll** filter
 * Bind once **$index** to the vscroll-row or vscroll-column directive
 ```html
 <div ng-controller="vscrollTest" vscroll>
-        <ul vscroll-port="vscrollContext">
+        <ul vscroll-port-x="vscrollContext">
             <li vscroll-row="{{::$index}}" 
             	ng-repeat="item in data | vscroll: vscrollContext track by $index">
                {{$item}}
