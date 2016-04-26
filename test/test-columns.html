@@ -12,7 +12,7 @@
 <body ng-controller="vscrollList">
 
 <div vscroll style="height: 120px; width: 400px; overflow-x: auto; white-space: nowrap;">
-    <div vscroll-port="vscrollContext" style="height: 100px;">
+    <div vscroll-port-x="vscrollContext" style="height: 100px;">
         <div vscroll-column="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index" style="display: inline-block;color: #{{item.color}}; height: 100%;background-color: #{{item.code}}; width: {{item.width}}px;">
         </div>
     </div>
