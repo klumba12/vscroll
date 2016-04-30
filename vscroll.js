@@ -132,7 +132,6 @@
          this.update = function (count, view) {
             invalidate(offsets, position.index, count);
             position = getPosition(offsets, view);
-            console.log(JSON.stringify(position));
 
             var offset = position.value - position.offset;
             if (offset >= 0) {
@@ -140,7 +139,6 @@
                var frame1 = Math.max(0, position.value - offset);
                var frame2 = Math.max(0, max - frame1);
                move(frame1, frame2);
-               console.log('top: ' + frame1 + ' bottom: ' + frame2);
             }
 
             return position.index;
@@ -305,7 +303,7 @@
       };
    }
 
-   function vscrollPortLinkFactory(type, $rootScope, $parse) {
+   function vscrollPortLinkFactory(type, canApply, $rootScope, $parse) {
       return function (scope, element, attrs, ctrls) {
          var context = $parse(attrs[type])(scope);
          if (!context) {
@@ -322,17 +320,21 @@
 
          var scrollOff = view.scrollEvent.on(
              function (e) {
-                position = e;
-                if (container.count) {
-                   container.apply(
-                       function () {
-                          container.cursor = port.update(container.count, e);
-                       },
-                       function () {
-                          if (!$rootScope.$$phase) {
-                             scope.$digest();
-                          }
-                       });
+                if (canApply(e, position)) {
+                   position = e;
+                   if (container.count) {
+                      container.apply(
+                          function () {
+                             container.cursor = port.update(container.count, e);
+                          },
+                          function () {
+                             if (container.cursor !== container.position) {
+                                if (!$rootScope.$$phase) {
+                                   scope.$digest();
+                                }
+                             }
+                          });
+                   }
                 }
              });
 
@@ -418,7 +420,13 @@
             };
          })],
          require: ['^vscroll', 'vscrollPortY'],
-         link: vscrollPortLinkFactory('vscrollPortY', $rootScope, $parse)
+         link: vscrollPortLinkFactory(
+             'vscrollPortY',
+             function (newValue, oldValue) {
+                return !oldValue || newValue.top !== oldValue.top;
+             },
+             $rootScope,
+             $parse)
       };
    }
 
@@ -446,7 +454,13 @@
             };
          })],
          require: ['^vscroll', 'vscrollPortX'],
-         link: vscrollPortLinkFactory('vscrollPortX', $rootScope, $parse)
+         link: vscrollPortLinkFactory(
+             'vscrollPortX',
+             function (newValue, oldValue) {
+                return !oldValue || newValue.left !== oldValue.left;
+             },
+             $rootScope,
+             $parse)
       };
    }
 

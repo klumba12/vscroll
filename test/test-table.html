@@ -4,29 +4,26 @@
 <head>
    <script src="../bower_components/angular/angular.js"></script>
    <script src="../vscroll.js"></script>
+   <style>
+      table{
+         border-spacing: 1;
+      }
+      table td{
+         padding: 0;
+      }
+   </style>
 </head>
 
 <body ng-controller="vscrollTable">
-<div vscroll style="height: 400px; width: 100%; overflow: auto;">
-   <table vscroll-port-x="columnContext">
-      <!--<thead>-->
-      <!--<tr vscroll-mark="top"><th ng-repeat="col in data[0] track by $index">{{$index}}</th></tr>-->
-      <!--</thead>-->
-      <tbody vscroll-port-y="rowContext">
-      <tr vscroll-mark="top">
-         <td colspan="{{data[0].length}}"></td>
-      </tr>
+<div vscroll style="height: 600px; width: 100%; overflow: auto;">
+   <table vscroll-port-x="columnContext" vscroll-port-y="rowContext">
       <tr vscroll-row="{{::$index}}" ng-repeat="row in data | vscroll: rowContext track by $index">
          <td vscroll-column="{{::$index}}" ng-repeat="color in row | vscroll: columnContext track by $index">
-            <div style="width: 80px; height: 80px; background-color: #{{data[rowContext.container.position+$parent.$index][columnContext.container.position+$index]}}">
-               {{rowContext.container.position+$parent.$index}}x{{columnContext.container.position+$index}}
+            <div ng-style="{'background-color': '#' + data[rowContext.container.position+$parent.$index][columnContext.container.position+$index]}"
+                 style="width: 10px; height: 10px; ">
             </div>
          </td>
       </tr>
-      <tr vscroll-mark="bottom">
-         <td colspan="{{data[0].length}}"></td>
-      </tr>
-      </tbody>
    </table>
 </div>
 
@@ -48,13 +45,13 @@
 
 <script language="javascript">
    var app = angular.module('app', ['vscroll']);
-   app.controller('vscrollTable', ['$scope', 'vscroll', function ($scope, vscroll) {
+   app.controller('vscrollTable', ['$scope', 'vscroll', '$window', function ($scope, vscroll, $window) {
       var rows = 0,
           columns = 0;
 
       $scope.data = [];
       $scope.rowContext = vscroll({
-         threshold: 10,
+         threshold: Math.ceil($window.innerHeight /  10),
          fetch: function (skip, take, d) {
             console.log('row update requested: skip ' + skip);
             console.log('row update requested: take ' + take);
@@ -73,9 +70,16 @@
 
       $scope.settingsR = $scope.rowContext.settings;
       $scope.containerR = $scope.rowContext.container;
+      $scope.containerR.apply = function(f, emit){
+         f();
+         if($scope.containerR.cursor !== $scope.containerR.position) {
+            console.log('apply y');
+            $scope.$digest();
+         }
+      };
 
       $scope.columnContext = vscroll({
-         threshold: 20,
+         threshold: Math.ceil($window.innerWidth / 10),
          fetch: function (skip, take, d) {
             console.log('col update requested: skip ' + skip);
             console.log('col update requested: take ' + take);
@@ -94,6 +98,14 @@
 
       $scope.settingsC = $scope.columnContext.settings;
       $scope.containerC = $scope.columnContext.container;
+      $scope.containerC.apply = function(f, emit){
+         f();
+
+         if($scope.containerC.cursor !== $scope.containerC.position) {
+            console.log('apply x');
+            $scope.$digest();
+         }
+      };
    }]);
 </script>
 
