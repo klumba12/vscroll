@@ -1,4 +1,4 @@
-#vscroll + angularjs
+#vscroll 1.3 + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
 vscroll can offer performance benefits when working with very large collections. 
