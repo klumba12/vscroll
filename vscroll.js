@@ -132,6 +132,7 @@
          this.update = function (count, view) {
             invalidate(offsets, position.index, count);
             position = getPosition(offsets, view);
+            console.log(JSON.stringify(position));
 
             var offset = position.value - position.offset;
             if (offset >= 0) {
@@ -139,6 +140,7 @@
                var frame1 = Math.max(0, position.value - offset);
                var frame2 = Math.max(0, max - frame1);
                move(frame1, frame2);
+               console.log('top: ' + frame1 + ' bottom: ' + frame2);
             }
 
             return position.index;
@@ -176,9 +178,9 @@
             items[index] = empty;
          };
       };
-   };
+   }
 
-   function vscrollService ($q) {
+   function vscrollService($q) {
       return function (settings) {
          settings = angular.extend({
             threshold: 64,
@@ -228,7 +230,7 @@
                      settings.fetch(0, threshold, deferred);
                   }
                   else {
-                     var skip = (prevPage + 1) * threshold - 1;
+                     var skip = (prevPage + 1) * threshold;
                      var take = Math.min(self.total - skip, (page - prevPage) * threshold);
                      settings.fetch(skip, take, deferred);
                   }
@@ -256,9 +258,9 @@
             container: container
          };
       };
-   };
+   }
 
-    function vscrollFilter() {
+   function vscrollFilter() {
       var empty = [];
 
       return function (data, context) {
@@ -301,13 +303,13 @@
 
          return empty;
       };
-   };
+   }
 
    function vscrollPortLinkFactory(type, $rootScope, $parse) {
       return function (scope, element, attrs, ctrls) {
          var context = $parse(attrs[type])(scope);
          if (!context) {
-            throw Error('Context for vscroll port is not set');
+            throw Error('Context for ' + type + ' is not set');
          }
 
          var view = ctrls[0],
@@ -357,7 +359,7 @@
             updateOff();
          });
       };
-   };
+   }
 
    function vscrollCtrl($scope, $element) {
       var self = this,
@@ -383,16 +385,16 @@
       $scope.$on('$destroy', function () {
          $element.unbind('scroll', onScroll);
       });
-   };
+   }
 
-   function vscrollDirective () {
+   function vscrollDirective() {
       return {
          restrict: 'A',
          controller: vscrollCtrl
       };
-   };
+   }
 
-    function vscrollPortYDirective($rootScope, $parse) {
+   function vscrollPortYDirective($rootScope, $parse) {
       return {
          restrict: 'A',
          controller: ['$element', vscrollPortCtrlFactory(function (element, markup) {
@@ -418,7 +420,7 @@
          require: ['^vscroll', 'vscrollPortY'],
          link: vscrollPortLinkFactory('vscrollPortY', $rootScope, $parse)
       };
-   };
+   }
 
    function vscrollPortXDirective($rootScope, $parse) {
       return {
@@ -446,7 +448,7 @@
          require: ['^vscroll', 'vscrollPortX'],
          link: vscrollPortLinkFactory('vscrollPortX', $rootScope, $parse)
       };
-   };
+   }
 
    function vscrollRowDirective() {
       return {
@@ -469,7 +471,7 @@
             });
          }
       };
-   };
+   }
 
    function vscrollColumnDirective() {
       return {
@@ -492,12 +494,12 @@
             });
          }
       };
-   };
+   }
 
-  function vscrollMarkDirective () {
+   function vscrollMarkDirective() {
       return {
          restrict: 'A',
-         require: ['?vscrollPortX', '?vscrollPortY'],
+         require: ['^?vscrollPortX', '^?vscrollPortY'],
          link: function (scope, element, attrs, ctrls) {
             var ports = ctrls.filter(function (ctrl) {
                return ctrl;
@@ -516,6 +518,6 @@
             });
          }
       };
-   };
+   }
 })
 (angular);
