@@ -2,83 +2,79 @@
 <html ng-app="app">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>vscroll test</title>
-    <script src="../bower_components/angular/angular.js"></script>
-    <script src="../vscroll.js"></script>
+   <script src="../bower_components/angular/angular.js"></script>
+   <script src="../vscroll.js"></script>
+   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body ng-controller="vscrollTable">
 
-    <div style="width: 500px; height: 500px; overflow: auto" vscroll>
-        <table class="scrollable-table">
-            <thead>
-                <tr vscroll-port="columnsCotext">
-                    <th vscroll-column="{$index}" ng-repeat="header in headers | vscroll: columnsContext track by $index">
-                        {{header}}
-                    </th>
-                </tr>
-            </thead>
-            <tbody vscroll-port="{row: rowsContext, column: columnsContext}">
-                <tr vscroll-mark="top" style="padding-top: 60px">
-                    <td colspan="4"></td>
-                </tr>
-                <tr vscroll-row="{{::$index}}" 
-                    ng-repeat="item in data | vscroll: rowsContext track by $index" 
-                    style="color: #{{item.color}}; height: {{item.height}}px; background-color: #{{item.code}}">
-                    <td>{{item.index}}</td>
-                    <td vscroll-column="{$index}" ng-repeat="column in item.columns | vscroll: columnsContext track by $index">
-                        {{item[column]}}
-                    </td>
-                </tr>
-                <tr vscroll-mark="bottom"></tr>
-            </tbody>
-        </table>
-    </div>
+<div vscroll style="height: 500px; width: 100%; overflow: auto;">
+   <table>
+      <tbody vscroll-port-y="rowContext" vscroll-port-x="columnContext">
+      <tr vscroll-row="{{::$index}}" ng-repeat="row in data | vscroll: rowContext track by $index">
+         <td ng-repeat="color in row | vscroll: columnContext track by $index">
+            <div style="width: 80px; height: 80px; background-color: #{{data[$parent.$index][$index]}}"></div>
+         </td>
+      </tr>
+      </tbody>
+   </table>
+</div>
 
-    <script language="javascript">
-        var app = angular.module('app', ['vscroll']);
 
-app.controller('vscrollTable', ['$scope', '$interval', 'vscroll', function($scope, $interval, vscroll) {
-//    var interval = $interval(function() {
-//     changeColors();
-//    }, 1000);
-   
-   $scope.data = [];
-   $scope.headers = [];
-   
-   var changeColors = function () {
-    for (var i = 0; i < rowsNumber; i++) {
-      var code = Math.floor(Math.random() * 16777215);
-      $scope.data[i].code = code.toString(16);
-      $scope.data[i].color = isLight(code) ? '000' : 'fff'
-    }
-   };
-  
-   $scope.rowsContext = vscroll({
-      threshold: 40,
-      fetch: function(skip, take, d) {
-        for (var i = skip; i < skip + take; i++) {
-                    $scope.data[i] = [];
-                    for(var j = 0, length = $scope.headers.length; j < length; j++)
-                        $scope.data[i][j] = Math.floor(Math.random() * 16777215)
-                }
+<script language="javascript">
+   var app = angular.module('app', ['vscroll']);
+   app.controller('vscrollTable', ['$scope', 'vscroll', function($scope, vscroll) {
+      var rows = 0,
+            columns = 0;
 
-                    d.resolve($scope.data.length + take);                    
-                }
-            });
-   
-   $scope.columnsContext = vscroll({
-      threshold: 40,       
-   });
-   
-   $scope.$on('$destroy', function() {
-     $interval.cancel(interval);
-   })
+      $scope.data = [];
+      $scope.rowContext = vscroll({
+         threshold: 20,
+         fetch: function(skip, take, d) {
+            console.log('row update requested: skip ' + skip);
+            console.log('row update requested: take ' + take);
 
-}]);
-    </script>
+            for (var i = skip; i < take; i++) {
+               var row = $scope.data[i] = [];
+               for (var j = 0; j < columns; j++) {
+                  row[j] = Math.floor(Math.random() * 16777215).toString(16);
+               }
+            }
+
+            rows += take;
+            d.resolve(rows + take);
+         }
+      });
+
+      $scope.settingsR = $scope.rowContext.settings;
+      $scope.containerR = $scope.rowContext.container;
+
+      $scope.columnContext = vscroll({
+         threshold: 20,
+         fetch: function(skip, take, d) {
+            console.log('col update requested: skip ' + skip);
+            console.log('col update requested: take ' + take);
+
+            for (var j = 0; j < rows; j++) {
+               var row = $scope.data[j];
+               for (var i = skip; i < take; i++) {
+                  row[i] = Math.floor(Math.random() * 16777215).toString(16);
+               }
+            }
+
+            columns += take;
+            d.resolve(columns + take);
+         }
+      });
+
+      $scope.settingsC = $scope.columnContext.settings;
+      $scope.containerC = $scope.columnContext.container;
+   }]);
+</script>
+
 </body>
 
 </html>
+
+                
