@@ -1,6 +1,21 @@
 (function (angular) {
    'use strict';
 
+   vscrollService.$inject = ['$q'];
+   vscrollCtrl.$inject = ['$scope', '$element'];
+   vscrollPortYDirective.$inject = ['$rootScope', '$parse'];
+   vscrollPortXDirective.$inject = ['$rootScope', '$parse'];
+
+   angular.module('vscroll', [])
+       .service('vscroll', vscrollService)
+       .filter('vscroll', vscrollFilter)
+       .directive('vscroll', vscrollDirective)
+       .directive('vscrollPortY', vscrollPortYDirective)
+       .directive('vscrollPortX', vscrollPortXDirective)
+       .directive('vscrollRow', vscrollRowDirective)
+       .directive('vscrollColumn', vscrollColumnDirective)
+       .directive('vscrollMark', vscrollMarkDirective);
+
    var getHeight = function (element) {
       var height = element.offsetHeight,
           style = getComputedStyle(element);
@@ -96,7 +111,7 @@
       };
    };
 
-   var vscrollPortCtrlFactory = function (contextFactory) {
+   function vscrollPortCtrlFactory(contextFactory) {
       return function ($element) {
          this.markup = {};
 
@@ -163,7 +178,7 @@
       };
    };
 
-   var vscrollService = function ($q) {
+   function vscrollService ($q) {
       return function (settings) {
          settings = angular.extend({
             threshold: 64,
@@ -243,7 +258,7 @@
       };
    };
 
-   var vscrollFilter = function () {
+    function vscrollFilter() {
       var empty = [];
 
       return function (data, context) {
@@ -288,7 +303,7 @@
       };
    };
 
-   var vscrollPortLinkFactory = function (type, $rootScope, $parse) {
+   function vscrollPortLinkFactory(type, $rootScope, $parse) {
       return function (scope, element, attrs, ctrls) {
          var context = $parse(attrs[type])(scope);
          if (!context) {
@@ -344,7 +359,7 @@
       };
    };
 
-   var vscrollCtrl = function ($scope, $element) {
+   function vscrollCtrl($scope, $element) {
       var self = this,
           content = $element[0];
 
@@ -370,14 +385,14 @@
       });
    };
 
-   var vscrollDirective = function () {
+   function vscrollDirective () {
       return {
          restrict: 'A',
          controller: vscrollCtrl
       };
    };
 
-   var vscrollPortYDirective = function ($rootScope, $parse) {
+    function vscrollPortYDirective($rootScope, $parse) {
       return {
          restrict: 'A',
          controller: ['$element', vscrollPortCtrlFactory(function (element, markup) {
@@ -405,7 +420,7 @@
       };
    };
 
-   var vscrollPortXDirective = function ($rootScope, $parse) {
+   function vscrollPortXDirective($rootScope, $parse) {
       return {
          restrict: 'A',
          controller: ['$element', vscrollPortCtrlFactory(function (element, markup) {
@@ -433,7 +448,7 @@
       };
    };
 
-   var vscrollRowDirective = function () {
+   function vscrollRowDirective() {
       return {
          restrict: 'A',
          require: '^vscrollPortY',
@@ -456,7 +471,7 @@
       };
    };
 
-   var vscrollColumnDirective = function () {
+   function vscrollColumnDirective() {
       return {
          restrict: 'A',
          require: '^vscrollPortX',
@@ -479,7 +494,7 @@
       };
    };
 
-   var vscrollMarkDirective = function () {
+  function vscrollMarkDirective () {
       return {
          restrict: 'A',
          require: ['?vscrollPortX', '?vscrollPortY'],
@@ -502,21 +517,5 @@
          }
       };
    };
-
-   vscrollService.$inject = ['$q'];
-   vscrollCtrl.$inject = ['$scope', '$element'];
-   vscrollPortYDirective.$inject = ['$rootScope', '$parse'];
-   vscrollPortXDirective.$inject = ['$rootScope', '$parse'];
-
-   angular.module('vscroll', [])
-       .service('vscroll', vscrollService)
-       .filter('vscroll', vscrollFilter)
-       .directive('vscroll', vscrollDirective)
-       .directive('vscrollPortY', vscrollPortYDirective)
-       .directive('vscrollPortX', vscrollPortXDirective)
-       .directive('vscrollRow', vscrollRowDirective)
-       .directive('vscrollColumn', vscrollColumnDirective)
-       .directive('vscrollMark', vscrollMarkDirective);
-
 })
 (angular);
