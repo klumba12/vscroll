@@ -7,34 +7,59 @@
 </head>
 
 <body ng-controller="vscrollTable">
-
-<div vscroll style="height: 500px; width: 100%; overflow: auto;">
-   <table>
-      <tbody vscroll-port-y="rowContext" vscroll-port-x="columnContext">
+<div vscroll style="height: 400px; width: 100%; overflow: auto;">
+   <table vscroll-port-x="columnContext">
+      <!--<thead>-->
+      <!--<tr vscroll-mark="top"><th ng-repeat="col in data[0] track by $index">{{$index}}</th></tr>-->
+      <!--</thead>-->
+      <tbody vscroll-port-y="rowContext">
+      <tr vscroll-mark="top">
+         <td colspan="{{data[0].length}}"></td>
+      </tr>
       <tr vscroll-row="{{::$index}}" ng-repeat="row in data | vscroll: rowContext track by $index">
-         <td ng-repeat="color in row | vscroll: columnContext track by $index">
-            <div style="width: 80px; height: 80px; background-color: #{{data[$parent.$index][$index]}}"></div>
+         <td vscroll-column="{{::$index}}" ng-repeat="color in row | vscroll: columnContext track by $index">
+            <div style="width: 80px; height: 80px; background-color: #{{data[rowContext.container.position+$parent.$index][columnContext.container.position+$index]}}">
+               {{rowContext.container.position+$parent.$index}}x{{columnContext.container.position+$index}}
+            </div>
          </td>
+      </tr>
+      <tr vscroll-mark="bottom">
+         <td colspan="{{data[0].length}}"></td>
       </tr>
       </tbody>
    </table>
 </div>
 
+<!--<ul style="list-style: none">-->
+   <!--<li><b>settings.threshold:</b> {{settingsR.threshold}}</li>-->
+   <!--<li><b>container.total:</b> {{containerR.total}}</li>-->
+   <!--<li><b>container.count:</b> {{containerR.count}}</li>-->
+   <!--<li><b>container.position:</b> {{containerR.position}}</li>-->
+   <!--<li><b>container.cursor:</b>{{containerR.cursor}}</li>-->
+   <!--<li><b>container.page:</b> {{containerR.page}}</li>-->
+   <!--<li><b>container.force:</b> {{containerR.force}}</li>-->
+   <!--<li><b>container.items.length:</b> {{containerR.items.length}}</li>-->
+   <!--<li><b>container.items[first]:</b> {{containerR.items[0]}}</li>-->
+   <!--<li><b>container.items[last]:</b> {{containerR.items[containerR.items.length - 1]}}</li>-->
+   <!--<li><b>container.items:</b> {{containerR.items}}</li>-->
+   <!--<li><b>container.data:</b> {{data}}</li>-->
+<!--</ul>-->
+
 
 <script language="javascript">
    var app = angular.module('app', ['vscroll']);
-   app.controller('vscrollTable', ['$scope', 'vscroll', function($scope, vscroll) {
+   app.controller('vscrollTable', ['$scope', 'vscroll', function ($scope, vscroll) {
       var rows = 0,
-            columns = 0;
+          columns = 0;
 
       $scope.data = [];
       $scope.rowContext = vscroll({
-         threshold: 20,
-         fetch: function(skip, take, d) {
+         threshold: 10,
+         fetch: function (skip, take, d) {
             console.log('row update requested: skip ' + skip);
             console.log('row update requested: take ' + take);
 
-            for (var i = skip; i < take; i++) {
+            for (var i = skip; i < skip + take; i++) {
                var row = $scope.data[i] = [];
                for (var j = 0; j < columns; j++) {
                   row[j] = Math.floor(Math.random() * 16777215).toString(16);
@@ -51,13 +76,13 @@
 
       $scope.columnContext = vscroll({
          threshold: 20,
-         fetch: function(skip, take, d) {
+         fetch: function (skip, take, d) {
             console.log('col update requested: skip ' + skip);
             console.log('col update requested: take ' + take);
 
             for (var j = 0; j < rows; j++) {
                var row = $scope.data[j];
-               for (var i = skip; i < take; i++) {
+               for (var i = skip; i < skip + take; i++) {
                   row[i] = Math.floor(Math.random() * 16777215).toString(16);
                }
             }
