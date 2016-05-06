@@ -526,7 +526,7 @@
             scope.$on('$destroy', function () {
                angular.forEach(ports, function (port) {
                   if (port.markup) {
-                     port.markup[attr.vscrollMark] = null;
+                     port.markup[attrs.vscrollMark] = null;
                   }
                });
             });
