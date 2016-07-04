@@ -2,7 +2,7 @@
    'use strict';
 
    vscrollService.$inject = ['$q'];
-   vscrollCtrl.$inject = ['$scope', '$element'];
+   vscrollCtrl.$inject = ['$scope', '$element', '$window'];
    vscrollPortYDirective.$inject = ['$rootScope', '$parse'];
    vscrollPortXDirective.$inject = ['$rootScope', '$parse'];
 
@@ -151,6 +151,7 @@
 
          this.reset = function () {
             max = 0;
+			items = [];
             offsets = [];
             position = {index: 0, offset: 0, value: 0};
             move(0, 0);
@@ -228,9 +229,14 @@
                      settings.fetch(0, threshold, deferred);
                   }
                   else {
-                     var skip = (prevPage + 1) * threshold;
-                     var take = Math.min(self.total - skip, (page - prevPage) * threshold);
-                     settings.fetch(skip, take, deferred);
+                     if (self.total < skip) {
+                        deferred.resolve(self.total);
+                     }
+                     else {
+                        var skip = (prevPage + 1) * threshold;
+                        var take = (page - prevPage) * threshold;
+                        settings.fetch(skip, take, deferred);
+                     }
                   }
 
                }
@@ -363,9 +369,10 @@
       };
    }
 
-   function vscrollCtrl($scope, $element) {
+   function vscrollCtrl($scope, $element, $window) {
       var self = this,
-          content = $element[0];
+          content = $element[0],
+          window = angular.element($window);
 
       this.scrollEvent = new Event();
       this.reset = function () {
@@ -382,10 +389,19 @@
              });
           };
 
+      var onResize =
+          function () {
+             self.reset();
+             onScroll();
+          };
+
       $element.bind('scroll', onScroll);
+
+      window.bind('resize', onResize);
 
       $scope.$on('$destroy', function () {
          $element.unbind('scroll', onScroll);
+         window.unbind('resize', onResize);
       });
    }
 
