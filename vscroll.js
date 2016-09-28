@@ -151,7 +151,7 @@
 
          this.reset = function () {
             max = 0;
-			items = [];
+            //items = [];
             offsets = [];
             position = {index: 0, offset: 0, value: 0};
             move(0, 0);
