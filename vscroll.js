@@ -167,9 +167,12 @@
                return;
             }
 
-            var lastIndex = items.length - 1;
-            if (index === lastIndex) {
+            var length = items.length - 1;
+            if (index === length) {
                items.pop();
+               while (length-- && items[length] === empty) {
+                  items.pop();
+               }
                return;
             }
 
