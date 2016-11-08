@@ -119,7 +119,7 @@
              items = [],
              max = 0,
              offsets = [],
-             position = {index: 0, offset: 0, value: 0},
+             position = { index: 0, offset: 0, value: 0 },
              invalidate = invalidateFactory(items),
              context = contextFactory($element, this.markup),
              move = context.move,
@@ -151,9 +151,9 @@
 
          this.reset = function () {
             max = 0;
-			items = [];
+            //items = [];
             offsets = [];
-            position = {index: 0, offset: 0, value: 0};
+            position = { index: 0, offset: 0, value: 0 };
             move(0, 0);
          };
 
@@ -298,7 +298,7 @@
 
                container.position = cursor;
                view.length = last - first;
-               for (var i = first, j = 0; i < last; i++ , j++) {
+               for (var i = first, j = 0; i < last; i++, j++) {
                   view[j] = data[i];
                }
 
