@@ -119,7 +119,7 @@
              items = [],
              max = 0,
              offsets = [],
-             position = {index: 0, offset: 0, value: 0},
+             position = { index: 0, offset: 0, value: 0 },
              invalidate = invalidateFactory(items),
              context = contextFactory($element, this.markup),
              move = context.move,
@@ -153,7 +153,7 @@
             max = 0;
             //items = [];
             offsets = [];
-            position = {index: 0, offset: 0, value: 0};
+            position = { index: 0, offset: 0, value: 0 };
             move(0, 0);
          };
 
@@ -167,9 +167,12 @@
                return;
             }
 
-            var lastIndex = items.length - 1;
-            if (index === lastIndex) {
+            var length = items.length - 1;
+            if (index === length) {
                items.pop();
+               while (length-- && items[length] === empty) {
+                  items.pop();
+               }
                return;
             }
 
@@ -295,7 +298,7 @@
 
                container.position = cursor;
                view.length = last - first;
-               for (var i = first, j = 0; i < last; i++ , j++) {
+               for (var i = first, j = 0; i < last; i++, j++) {
                   view[j] = data[i];
                }
 
