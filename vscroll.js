@@ -323,6 +323,7 @@
 
          element[0].tabIndex = 0;
          element.css('outline', 'none');
+         element.css('overflow-anchor', 'none');
 
          var scrollOff = view.scrollEvent.on(
              function (e) {
