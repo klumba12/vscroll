@@ -1,22 +1,22 @@
-#vscroll 1.3 + angularjs
+# vscroll 1.3 + angularjs
 Angular virtual scroll that can be applied to any ng-repeat markup.
 
 vscroll can offer performance benefits when working with very large collections. 
 It does so by only rendering and processing a subset of the data which is visible to the user vs. processing the entire list of data. 
 By creating only DOM elements for the visible items, this can greatly reduce the amount of work it has to do.
-##Licence
+## Licence
 Code licensed under MIT license.
 ## Examples
 http://klumba12.github.io/vscroll/
-##Installing via Bower
+## Installing via Bower
 `bower install vscroll`
 ## Get Started
-###Module
+### Module
 Don't forget to include vscroll module!
 ```javascript
 anuglar.module('some-module-name', ['vscroll',...])
 ```
-###Controller
+### Controller
 Inject scroll service to controller and invoke it to create vscroll context.
 ```javascript
 var app = angular.module('app', ['vscroll']);
@@ -29,7 +29,7 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
     $scope.vscrollContext = vscroll({threshold: 30});
 }
 ```
-###API
+### API
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
 User should inject service to angular controller and invoke it by passing settings object
 ```javascript
@@ -59,7 +59,7 @@ vscroll({
         }		
 })
 ```
-###HTML markup
+### HTML markup
 * Add **vscroll** directive to element with scroll bars
 * Add **vscroll-port-(x|y)** directive to scrollable element
 * Add **vscroll** filter and **track by $index** into ng-repeat directive
@@ -79,11 +79,11 @@ vscroll({
 ## Development
 To setup development environment make sure that npm is installed on your machine, after that just execute npm command for the project.  
 `npm install`
-##Testing
+## Testing
 We use phantomjs and jasmine to ensure quality of the code.
 The easiest way to run these asserts is to use npm command for the project.  
 `npm test`
-##How it works
+## How it works
 We believe, that core concept of `vscroll` is simplicity.
 We don't implement complex transclusions or our own `ng-repeat` directive, we just use angular's native tools.
 We don't change elements, we change collection, and angular is responsible for the rest.
