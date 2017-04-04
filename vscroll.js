@@ -119,7 +119,7 @@
 					items = [],
 					max = 0,
 					offsets = [],
-					position = { index: 0, offset: 0, value: 0 },
+					position = {index: 0, offset: 0, value: 0},
 					invalidate = invalidateFactory(items),
 					context = contextFactory($element, this.markup),
 					move = context.move,
@@ -153,7 +153,7 @@
 				max = 0;
 				//items = [];
 				offsets = [];
-				position = { index: 0, offset: 0, value: 0 };
+				position = {index: 0, offset: 0, value: 0};
 				move(0, 0);
 			};
 
@@ -313,12 +313,12 @@
 	}
 
 	function vscrollPortLinkFactory(type, canApply, $rootScope, $parse) {
-		function factory(scope,element, view, port){
+		function factory(scope, element, view, port) {
 			element[0].tabIndex = 0;
 			element.css('outline', 'none');
 			element.css('overflow-anchor', 'none');
 
-			return function (context){
+			return function (context) {
 				var position = null,
 						container = context.container;
 
@@ -373,12 +373,12 @@
 			var init = factory(scope, element, ctrls[0], ctrls[1]);
 
 			var off = scope.$watch(
-					function(){
+					function () {
 						// waiting: while context is set
 						return $parse(attrs[type])(scope);
 					},
-					function(context){
-						if(context){
+					function (context) {
+						if (context) {
 							init(context);
 							off();
 						}
