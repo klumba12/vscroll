@@ -199,6 +199,7 @@
 				force: true,
 				resetEvent: new Event(),
 				updateEvent: new Event(),
+				drawEvent: new Event(),
 
 				apply: function (f, emit) {
 					f();
@@ -297,6 +298,12 @@
 							last = Math.min(cursor + threshold, count);
 
 					container.position = cursor;
+					container.drawEvent.emit({
+						first: first,
+						last: last,
+						position: cursor
+					});
+
 					view.length = last - first;
 					for (var i = first, j = 0; i < last; i++, j++) {
 						view[j] = data[i];
