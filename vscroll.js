@@ -292,7 +292,8 @@
 					d.resolve(container.total);
 				},
 				rowHeight: 0,
-				columnHeight: 0
+				columnHeight: 0,
+				resetTriggers: []
 			}, settings);
 
 			container.update(0, true);
@@ -386,6 +387,12 @@
 						});
 
 
+				var resizeOff = view.resizeEvent.on(
+						function (e) {
+							e.handled = context.settings.resetTriggers.indexOf('resize') < 0
+						}
+				);
+
 				var resetOff = container.resetEvent.on(
 						function () {
 							port.reset();
@@ -405,6 +412,7 @@
 					scrollOff();
 					resetOff();
 					updateOff();
+					resizeOff();
 				});
 			}
 		}
@@ -437,23 +445,28 @@
 		this.scrollEvent = new Event();
 		this.reset = function () {
 			content.scrollTop = 0;
+			content.scrollLeft = 0;
 		};
 
-		var onScroll =
-				function () {
-					self.scrollEvent.emit({
-						width: content.scrollWidth,
-						height: content.scrollHeight,
-						top: content.scrollTop,
-						left: content.scrollLeft
-					});
-				};
+		this.resizeEvent = new Event();
 
-		var onResize =
-				function () {
-					self.reset();
-					onScroll();
-				};
+		var onScroll = function () {
+			self.scrollEvent.emit({
+				width: content.scrollWidth,
+				height: content.scrollHeight,
+				top: content.scrollTop,
+				left: content.scrollLeft
+			});
+		};
+
+		var onResize = function () {
+			const e = {handled: false};
+			self.resizeEvent.emit(e);
+			if (!e.handled) {
+				self.reset();
+				onScroll();
+			}
+		};
 
 		$element.bind('scroll', onScroll);
 
@@ -507,7 +520,7 @@
 					itemSize: function () {
 						return context().settings.rowHeight;
 					},
-					viewSize: function(view){
+					viewSize: function (view) {
 						return view.height;
 					},
 					invalidateFactory: function (items) {
@@ -570,7 +583,7 @@
 					itemSize: function () {
 						return context().settings.columnWidth;
 					},
-					viewSize: function(view){
+					viewSize: function (view) {
 						return view.width;
 					},
 					invalidateFactory: function (items) {
