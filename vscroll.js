@@ -153,13 +153,6 @@
 					var frame1 = Math.max(0, position.offset);
 					var frame2 = Math.max(0, max - frame1);
 
-					console.log('position: ' + JSON.stringify(position));
-					console.log('max: ' + max);
-
-					console.log('view: ' + JSON.stringify(view));
-					console.log('frame1: ' + frame1);
-					console.log('frame2: ' + frame2);
-
 					move(frame1, frame2);
 				}
 
