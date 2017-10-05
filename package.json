@@ -7,7 +7,6 @@
     "test": "test"
   },
   "scripts": {
-    "postinstall": "bower install",
     "test": "gulp test"
   },
   "repository": {
