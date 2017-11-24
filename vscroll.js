@@ -17,16 +17,16 @@
 			.directive('vscrollMark', vscrollMarkDirective);
 
 	var getHeight = function (element) {
-		var height = element.offsetHeight,
-				style = getComputedStyle(element);
+		var height = element.offsetHeight;
+		var style = getComputedStyle(element);
 
 		height += parseInt(style.marginTop) + parseInt(style.marginBottom);
 		return height;
 	};
 
 	var getWidth = function (element) {
-		var width = element.offsetWidth,
-				style = getComputedStyle(element);
+		var width = element.offsetWidth;
+		var style = getComputedStyle(element);
 
 		width += parseInt(style.marginLeft) + parseInt(style.marginRight);
 		return width;
@@ -55,9 +55,9 @@
 
 	var invalidateFactory = function (items) {
 		return function (offsets, index, count) {
-			var threshold = items.length,
-					cursor = offsets.length,
-					diff = Math.min(count, threshold + index) - cursor;
+			var threshold = items.length;
+			var cursor = offsets.length;
+			var diff = Math.min(count, threshold + index) - cursor;
 
 			for (var i = threshold - diff; i < threshold; i++) {
 				var value = items[i]();
@@ -118,22 +118,23 @@
 		return function ($element) {
 			this.markup = {};
 
-			var self = this,
-					items = [],
-					max = 0,
-					offsets = [],
-					position = {index: 0, offset: 0, value: 0, lastOffset: 0},
-					layout = layoutFactory(
-							$element,
-							this.markup,
-							function () {
-								return self.context
-							}),
-					invalidate = layout.invalidateFactory(items),
-					move = layout.move,
-					getPosition = layout.getPosition,
-					itemSize = layout.itemSize,
-					viewSize = layout.viewSize;
+			var self = this;
+			var items = [];
+			var max = 0;
+			var offsets = [];
+			var position = {index: 0, offset: 0, value: 0, lastOffset: 0};
+			var layout = layoutFactory(
+					$element,
+					this.markup,
+					function () {
+						return self.context
+					});
+
+			var invalidate = layout.invalidateFactory(items);
+			var move = layout.move;
+			var getPosition = layout.getPosition;
+			var itemSize = layout.itemSize;
+			var viewSize = layout.viewSize;
 
 			var empty = function () {
 				return 0;
@@ -217,11 +218,11 @@
 				},
 
 				update: function (count, force) {
-					var self = this,
-							threshold = settings.threshold,
-							cursor = self.cursor,
-							prevPage = self.page,
-							page = Math.ceil((cursor + threshold) / threshold) - 1;
+					var self = this;
+					var threshold = settings.threshold;
+					var cursor = self.cursor;
+					var prevPage = self.page;
+					var page = Math.ceil((cursor + threshold) / threshold) - 1;
 
 
 					self.count = count;
@@ -310,13 +311,13 @@
 				throw new Error('vscroll filter context is not set');
 			}
 
-			var settings = context.settings,
-					container = context.container,
-					view = container.items,
-					position = container.position,
-					cursor = container.cursor,
-					threshold = settings.threshold,
-					count = data.length;
+			var settings = context.settings;
+			var container = context.container;
+			var view = container.items;
+			var position = container.position;
+			var cursor = container.cursor;
+			var threshold = settings.threshold;
+			var count = data.length;
 
 			container.update(count);
 
@@ -324,8 +325,8 @@
 				if (container.force ||
 						(cursor <= count && cursor !== position)) {
 
-					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor),
-							last = Math.min(cursor + threshold, count);
+					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor);
+					var last = Math.min(cursor + threshold, count);
 
 					container.position = cursor;
 					container.drawEvent.emit({
@@ -356,8 +357,8 @@
 			element.css('overflow-anchor', 'none');
 
 			return function (context) {
-				var position = {top: 0, left: 0, height: 0, width: 0},
-						container = context.container;
+				var position = {top: 0, left: 0, height: 0, width: 0};
+				var container = context.container;
 
 				var scrollOff = view.scrollEvent.on(
 						function (e) {
