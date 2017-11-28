@@ -18,21 +18,78 @@
 
     var isUndef = angular.isUndefined;
 
-    var getHeight = function (element) {
-        var height = element.offsetHeight;
-        var style = getComputedStyle(element);
+    function sizeFactory(context, index) {
+        var settings = context.settings;
+        var container = context.container;
+        var size = settings.size;
 
-        height += parseInt(style.marginTop) + parseInt(style.marginBottom);
-        return height;
-    };
+        if (size) {
+            return function () {
+                return size(container.position + index);
+            }
+        }
+    }
 
-    var getWidth = function (element) {
-        var width = element.offsetWidth;
-        var style = getComputedStyle(element);
+    function widthFactory(context, element, index) {
+        var size = sizeFactory(context, index);
+        if (size) {
+            return size;
+        }
 
-        width += parseInt(style.marginLeft) + parseInt(style.marginRight);
-        return width;
-    };
+        var settings = context.settings;
+        var columnWidth = settings.columnWidth;
+
+        if (columnWidth) {
+            return function () {
+                return columnWidth;
+            }
+        }
+
+        if (settings.computeStyle) {
+            return function compute() {
+                var width = element.offsetWidth;
+                var style = getComputedStyle(element);
+
+                width += parseInt(style.marginLeft) + parseInt(style.marginRight);
+                return width;
+            };
+        }
+
+        return function () {
+            return element.offsetWidth;
+        };
+    }
+
+
+    function heightFactory(context, element, index) {
+        var size = sizeFactory(context, index);
+        if (size) {
+            return size;
+        }
+
+        var settings = context.settings;
+        var rowHeight = settings.rowHeight;
+
+        if (rowHeight) {
+            return function () {
+                return rowHeight;
+            }
+        }
+
+        if (settings.computeStyle) {
+            return function compute() {
+                var height = element.offsetHeight;
+                var style = getComputedStyle(element);
+
+                height += parseInt(style.marginTop) + parseInt(style.marginBottom);
+                return height;
+            };
+        }
+
+        return function () {
+            return element.offsetHeight;
+        };
+    }
 
     var findIndexAt = function (items, value) {
         var length = items.length;
@@ -289,7 +346,9 @@
                 },
                 rowHeight: 0,
                 columnWidth: 0,
-                resetTriggers: []
+                resetTriggers: [],
+                size: null,
+                computeStyle: true
             }, settings);
 
             container.update(0, true);
@@ -621,14 +680,7 @@
                 }
 
                 var row = element[0];
-                var rowHeight = port.context.settings.rowHeight;
-                var size = rowHeight
-                    ? function () {
-                        return rowHeight;
-                    }
-                    : function () {
-                        return getHeight(row);
-                    };
+                var size = heightFactory(port.context, row, index);
 
                 port.setItem(index, size);
                 scope.$on('$destroy', function () {
@@ -649,15 +701,7 @@
                 }
 
                 var column = element[0];
-                var columnWidth = port.context.settings.columnWidth;
-                var size = columnWidth
-                    ? function () {
-                        return columnWidth;
-                    }
-                    : function () {
-                        return getWidth(column);
-                    };
-
+                var size = widthFactory(port.context, column, index);
                 port.setItem(index, size);
                 scope.$on('$destroy', function () {
                     port.removeItem(index);

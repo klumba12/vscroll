@@ -41,17 +41,31 @@
 	<li><b>container.items[last]:</b> {{containerR.items[containerR.items.length - 1]}}</li>
 </ul>
 
+<ul style="list-style: none">
+	<li><b>settings.threshold:</b> {{settingsC.threshold}}</li>
+	<li><b>container.total:</b> {{containerC.total}}</li>
+	<li><b>container.count:</b> {{containerC.count}}</li>
+	<li><b>container.position:</b> {{containerC.position}}</li>
+	<li><b>container.cursor:</b>{{containerC.cursor}}</li>
+	<li><b>container.page:</b> {{containerC.page}}</li>
+	<li><b>container.force:</b> {{containerC.force}}</li>
+	<li><b>container.items.length:</b> {{containerC.items.length}}</li>
+	<li><b>container.items[first]:</b> {{containerC.items[0]}}</li>
+	<li><b>container.items[last]:</b> {{containerC.items[containerC.items.length - 1]}}</li>
+</ul>
 
 <script language="javascript">
 	var app = angular.module('app', ['vscroll']);
 	app.controller('vscrollTable', ['$scope', 'vscroll', '$window', function ($scope, vscroll, $window) {
 		var rows = 0;
 		var columns = 0;
+		var size = 12;
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
-			rowHeight: 12, // to avoid recalculation in getHeight
-			threshold: Math.ceil($window.innerHeight / 10),
+		//	rowHeight: size, // to avoid recalculation in getHeight
+			threshold: Math.ceil($window.innerHeight / size) + 1,
+			computeStyle: false,
 			fetch: function (skip, take, d) {
 				console.log('row update requested: skip ' + skip);
 				console.log('row update requested: take ' + take);
@@ -79,8 +93,9 @@
 		};
 
 		$scope.columnContext = vscroll({
-			columnWidth: 12, // to avoid recalculation in getHeight func
-			threshold: Math.ceil($window.innerWidth / 10),
+		//	columnWidth: size, // to avoid recalculation in getHeight func
+            computeStyle: false,
+			threshold: Math.ceil($window.innerWidth / size) + 1,
 			fetch: function (skip, take, d) {
 				console.log('col update requested: skip ' + skip);
 				console.log('col update requested: take ' + take);
