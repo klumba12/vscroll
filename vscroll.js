@@ -16,6 +16,8 @@
 			.directive('vscrollColumn', vscrollColumnDirective)
 			.directive('vscrollMark', vscrollMarkDirective);
 
+	var isUndef = angular.isUndefined;
+
 	var getHeight = function (element) {
 		var height = element.offsetHeight;
 		var style = getComputedStyle(element);
@@ -107,7 +109,7 @@
 		};
 
 		this.emit = function (e) {
-			var temp = angular.copy(events);
+			var temp = events.slice();
 			for (var i = 0, length = temp.length; i < length; i++) {
 				temp[i](e);
 			}
@@ -230,7 +232,7 @@
 					if (total !== self.total) {
 						self.total = total;
 						self.updateEvent.emit({
-							force: angular.isUndefined(force) ? !!settings.rowHeight : force
+							force: isUndef(force) ? !!settings.rowHeight : force
 						});
 					}
 
@@ -245,7 +247,7 @@
 										self.force = true;
 
 										self.updateEvent.emit({
-											force: angular.isUndefined(force) ? !!settings.rowHeight : force
+											force: isUndef(force) ? !!settings.rowHeight : force
 										});
 									}
 								});
@@ -371,6 +373,7 @@
 											},
 											function () {
 												if (container.cursor !== container.position) {
+													// TODO: applyAsync?
 													if (!$rootScope.$$phase) {
 														scope.$digest();
 													}
@@ -434,7 +437,7 @@
 	function vscrollCtrl($scope, $element, $window) {
 		var self = this;
 		var content = $element[0];
-		var window = angular.element($window);
+		var window = $window;
 		var scrollEvent = new Event();
 		var resizeEvent = new Event();
 
@@ -481,59 +484,61 @@
 		};
 	}
 
+	function yLayoutFactory(element, markup, context) {
+        var move = function (pos, value) {
+            if (markup.hasOwnProperty(pos)) {
+                var mark = markup[pos];
+                mark.css('height', value + 'px');
+            } else {
+                element.css('padding-' + pos, value + 'px');
+            }
+        };
+
+        var self = {
+            getPosition: function (offsets, view) {
+                var size = self.itemSize();
+                if (size) {
+                    var index = Math.round(view.top / size);
+                    return {
+                        value: view.top,
+                        index: index,
+                        offset: view.top,
+                        lastOffset: 0
+                    };
+                }
+
+                return getPosition(offsets, view.top);
+            },
+            move: function (top, bottom) {
+                move('top', top);
+                move('bottom', bottom);
+            },
+            itemSize: function () {
+                return context().settings.rowHeight;
+            },
+            viewSize: function (view) {
+                return view.height;
+            },
+            invalidateFactory: function (items) {
+                var invalidate = invalidateFactory(items);
+                return function (offsets, index, count) {
+                    var size = self.itemSize();
+                    if (size) {
+                        return;
+                    }
+
+                    return invalidate(offsets, index, count);
+                };
+            }
+        };
+
+        return self;
+    }
+
 	function vscrollPortYDirective($rootScope, $parse) {
 		return {
 			restrict: 'A',
-			controller: ['$element', vscrollPortCtrlFactory(function (element, markup, context) {
-				var move = function (pos, value) {
-					if (markup.hasOwnProperty(pos)) {
-						var mark = markup[pos];
-						mark.css('height', value + 'px');
-					} else {
-						element.css('padding-' + pos, value + 'px');
-					}
-				};
-
-				var self = {
-					getPosition: function (offsets, view) {
-						var size = self.itemSize();
-						if (size) {
-							var index = Math.round(view.top / size);
-							return {
-								value: view.top,
-								index: index,
-								offset: view.top,
-								lastOffset: 0
-							};
-						}
-
-						return getPosition(offsets, view.top);
-					},
-					move: function (top, bottom) {
-						move('top', top);
-						move('bottom', bottom);
-					},
-					itemSize: function () {
-						return context().settings.rowHeight;
-					},
-					viewSize: function (view) {
-						return view.height;
-					},
-					invalidateFactory: function (items) {
-						var invalidate = invalidateFactory(items);
-						return function (offsets, index, count) {
-							var size = self.itemSize();
-							if (size) {
-								return;
-							}
-
-							return invalidate(offsets, index, count);
-						};
-					}
-				};
-
-				return self;
-			})],
+			controller: ['$element', vscrollPortCtrlFactory(yLayoutFactory)],
 			require: ['^vscroll', 'vscrollPortY'],
 			link: vscrollPortLinkFactory(
 					'vscrollPortY',
@@ -545,58 +550,60 @@
 		};
 	}
 
+    function xLayoutFactory(element, markup, context) {
+        var move = function (pos, value) {
+            if (markup.hasOwnProperty(pos)) {
+                var mark = markup[pos];
+                mark.css('width', value + 'px');
+            } else {
+                element.css('padding-' + pos, value + 'px');
+            }
+        };
+
+        var self = {
+            getPosition: function (offsets, view) {
+                var size = self.itemSize();
+                if (size) {
+                    var index = Math.round(view.left / size);
+                    return {
+                        value: view.left,
+                        index: index,
+                        offset: size * index,
+                        lastOffset: 0
+                    };
+                }
+
+                return getPosition(offsets, view.left);
+            }, move: function (left, right) {
+                move('left', left);
+                move('right', right);
+            },
+            itemSize: function () {
+                return context().settings.columnWidth;
+            },
+            viewSize: function (view) {
+                return view.width;
+            },
+            invalidateFactory: function (items) {
+                var invalidate = invalidateFactory(items);
+                return function (offsets, index, count) {
+                    var size = self.itemSize();
+                    if (size) {
+                        return;
+                    }
+
+                    return invalidate(offsets, index, count);
+                };
+            }
+        };
+
+        return self;
+    }
+
 	function vscrollPortXDirective($rootScope, $parse) {
 		return {
 			restrict: 'A',
-			controller: ['$element', vscrollPortCtrlFactory(function (element, markup, context) {
-				var move = function (pos, value) {
-					if (markup.hasOwnProperty(pos)) {
-						var mark = markup[pos];
-						mark.css('width', value + 'px');
-					} else {
-						element.css('padding-' + pos, value + 'px');
-					}
-				};
-
-				var self = {
-					getPosition: function (offsets, view) {
-						var size = self.itemSize();
-						if (size) {
-							var index = Math.round(view.left / size);
-							return {
-								value: view.left,
-								index: index,
-								offset: size * index,
-								lastOffset: 0
-							};
-						}
-
-						return getPosition(offsets, view.left);
-					}, move: function (left, right) {
-						move('left', left);
-						move('right', right);
-					},
-					itemSize: function () {
-						return context().settings.columnWidth;
-					},
-					viewSize: function (view) {
-						return view.width;
-					},
-					invalidateFactory: function (items) {
-						var invalidate = invalidateFactory(items);
-						return function (offsets, index, count) {
-							var size = self.itemSize();
-							if (size) {
-								return;
-							}
-
-							return invalidate(offsets, index, count);
-						};
-					}
-				};
-
-				return self;
-			})],
+			controller: ['$element', vscrollPortCtrlFactory(xLayoutFactory)],
 			require: ['^vscroll', 'vscrollPortX'],
 			link: vscrollPortLinkFactory(
 					'vscrollPortX',
