@@ -34,6 +34,26 @@ vscroll service returns instance that connects user settings, scroll port and sc
 User should inject service to angular controller and invoke it by passing settings object
 ```javascript
 vscroll({
+     /**
+      * The height of an element, can be number or function. 
+      * Recommendation is to override the default function, because it used getComputedStyle internally.
+      * @param {HTMLElement) element.
+      * @param (number) index of element.
+      * @default function that returns offsetHeight + margin.top + margin.bottom.
+      */
+   	rowHeight: function(element, index) {
+   		return element.offsetHeight;
+   	},
+     /**
+      * The width of an element, can be number or function.
+      * Recommendation is to override the default function, because it used getComputedStyle internally.
+      * @param {HTMLElement) element.
+      * @param (number) index of element.
+      * @default function that returns offsetWidth + margin.left + margin.right.
+      */
+   	columnWidth: function(element, index) {
+   		return element.offsetHeight;
+   	},
 	/**
  	* The number defines how many items will be materialized to dom elements.
  	* @default 64.
