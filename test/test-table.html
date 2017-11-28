@@ -45,11 +45,12 @@
 <script language="javascript">
 	var app = angular.module('app', ['vscroll']);
 	app.controller('vscrollTable', ['$scope', 'vscroll', '$window', function ($scope, vscroll, $window) {
-		var rows = 0,
-				columns = 0;
+		var rows = 0;
+		var columns = 0;
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
+			rowHeight: 12, // to avoid recalculation in getHeight func
 			threshold: Math.ceil($window.innerHeight / 10),
 			fetch: function (skip, take, d) {
 				console.log('row update requested: skip ' + skip);
@@ -78,6 +79,7 @@
 		};
 
 		$scope.columnContext = vscroll({
+			columnWith: 12, // to avoid recalculation in getHeight func
 			threshold: Math.ceil($window.innerWidth / 10),
 			fetch: function (skip, take, d) {
 				console.log('col update requested: skip ' + skip);

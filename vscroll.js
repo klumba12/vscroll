@@ -254,11 +254,11 @@
 							settings.fetch(0, threshold, deferred);
 						}
 						else {
+							var skip = (prevPage + 1) * threshold;
 							if (self.total < skip) {
 								deferred.resolve(self.total);
 							}
 							else {
-								var skip = (prevPage + 1) * threshold;
 								var take = (page - prevPage) * threshold;
 								settings.fetch(skip, take, deferred);
 							}
@@ -280,13 +280,13 @@
 				}
 			};
 
-			settings = angular.extend({
+			settings = Object.assign({
 				threshold: 64,
 				fetch: function (skip, take, d) {
 					d.resolve(container.total);
 				},
 				rowHeight: 0,
-				columnHeight: 0,
+				columnWidth: 0,
 				resetTriggers: []
 			}, settings);
 
@@ -412,9 +412,9 @@
 		}
 
 		return function (scope, element, attrs, ctrls) {
-			var view = ctrls[0],
-					port = ctrls[1],
-					init = factory(scope, element, view, port);
+			var view = ctrls[0];
+			var port = ctrls[1];
+			var init = factory(scope, element, view, port);
 
 			var off = scope.$watch(
 					function () {
@@ -432,20 +432,23 @@
 	}
 
 	function vscrollCtrl($scope, $element, $window) {
-		var self = this,
-				content = $element[0],
-				window = angular.element($window);
+		var self = this;
+		var content = $element[0];
+		var window = angular.element($window);
+		var scrollEvent = new Event();
+		var resizeEvent = new Event();
 
-		this.scrollEvent = new Event();
+		this.scrollEvent = scrollEvent;
+		this.resizeEvent = new Event();
+
 		this.reset = function () {
 			content.scrollTop = 0;
 			content.scrollLeft = 0;
 		};
 
-		this.resizeEvent = new Event();
 
 		var onScroll = function () {
-			self.scrollEvent.emit({
+			scrollEvent.emit({
 				width: content.scrollWidth,
 				height: content.scrollHeight,
 				top: content.scrollTop,
@@ -455,20 +458,19 @@
 
 		var onResize = function () {
 			const e = {handled: false};
-			self.resizeEvent.emit(e);
+			resizeEvent.emit(e);
 			if (!e.handled) {
 				self.reset();
 				onScroll();
 			}
 		};
 
-		$element.bind('scroll', onScroll);
-
-		window.bind('resize', onResize);
+		content.addEventListener('scroll', onScroll);
+		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
-			$element.unbind('scroll', onScroll);
-			window.unbind('resize', onResize);
+			content.removeEventListener('scroll', onScroll);
+			window.removeEventListener('resize', onResize);
 		});
 	}
 
@@ -616,9 +618,14 @@
 					throw new Error('Incorrect index "' + attrs.vscrollRow + '" for vscroll row');
 				}
 
-				var row = element[0],
-						size = function () {
-							return port.context.settings.rowHeight || getHeight(row);
+				var row = element[0];
+				var rowHeight = port.context.settings.rowHeight;
+				var size = rowHeight
+						? function () {
+							return rowHeight;
+						}
+						: function () {
+							return getHeight(row);
 						};
 
 				port.setItem(index, size);
@@ -639,9 +646,14 @@
 					throw new Error('Incorrect index "' + attrs.vscrollColumn + '" for vscroll column')
 				}
 
-				var column = element[0],
-						size = function () {
-							return port.context.settings.columnHeight || getWidth(column);
+				var column = element[0];
+				var columnWidth = port.context.settings.columnWidth;
+				var size = columnWidth
+						? function () {
+							return columnWidth;
+						}
+						: function () {
+							return getWidth(element);
 						};
 
 				port.setItem(index, size);
@@ -657,18 +669,19 @@
 			restrict: 'A',
 			require: ['^?vscrollPortX', '^?vscrollPortY'],
 			link: function (scope, element, attrs, ctrls) {
+				var mark = attrs.vscrollMark;
 				var ports = ctrls.filter(function (ctrl) {
-					return ctrl;
+					return !!ctrl;
 				});
 
-				angular.forEach(ports, function (port) {
-					port.markup[attrs.vscrollMark] = element;
+				ports.forEach(function (port) {
+					port.markup[mark] = element;
 				});
 
 				scope.$on('$destroy', function () {
-					angular.forEach(ports, function (port) {
+					ports.forEach(function (port) {
 						if (port.markup) {
-							port.markup[attrs.vscrollMark] = null;
+							port.markup[mark] = null;
 						}
 					});
 				});
