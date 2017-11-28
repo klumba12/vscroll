@@ -353,7 +353,7 @@
     }
 
     function vscrollPortLinkFactory(type, canApply, $rootScope) {
-        function factory(scope, element, ctrls) {
+        return function factory(scope, element, attrs, ctrls) {
             var view = ctrls[0];
             var port = ctrls[1];
             var context = port.context;
@@ -655,7 +655,7 @@
                         return columnWidth;
                     }
                     : function () {
-                        return getWidth(element);
+                        return getWidth(column);
                     };
 
                 port.setItem(index, size);
