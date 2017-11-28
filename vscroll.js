@@ -527,6 +527,7 @@
             restrict: 'A',
             controller: ['$element', vscrollPortCtrlFactory(yLayoutFactory)],
             require: ['^vscroll', 'vscrollPortY'],
+            controllerAs: '$portY',
             bindToController: {
                 context: '<vscrollPortY'
             },
@@ -595,6 +596,7 @@
             restrict: 'A',
             controller: ['$element', vscrollPortCtrlFactory(xLayoutFactory)],
             require: ['^vscroll', 'vscrollPortX'],
+            controllerAs: '$portX',
             bindToController: {
                 context: '<vscrollPortX'
             },
