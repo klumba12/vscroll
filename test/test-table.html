@@ -63,8 +63,10 @@
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
+			rowHeight: function () {
+				return size;
+			},
 			threshold: Math.ceil($window.innerHeight / size) + 1,
-			computeStyle: false,
 			fetch: function (skip, take, d) {
 				console.log('row update requested: skip ' + skip);
 				console.log('row update requested: take ' + take);
@@ -92,7 +94,9 @@
 		};
 
 		$scope.columnContext = vscroll({
-            computeStyle: false,
+			columnWidth: function () {
+				return size;
+			},
 			threshold: Math.ceil($window.innerWidth / size) + 1,
 			fetch: function (skip, take, d) {
 				console.log('col update requested: skip ' + skip);
