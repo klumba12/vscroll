@@ -63,7 +63,6 @@
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
-		//	rowHeight: size, // to avoid recalculation in getHeight
 			threshold: Math.ceil($window.innerHeight / size) + 1,
 			computeStyle: false,
 			fetch: function (skip, take, d) {
@@ -93,7 +92,6 @@
 		};
 
 		$scope.columnContext = vscroll({
-		//	columnWidth: size, // to avoid recalculation in getHeight func
             computeStyle: false,
 			threshold: Math.ceil($window.innerWidth / size) + 1,
 			fetch: function (skip, take, d) {
