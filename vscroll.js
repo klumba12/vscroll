@@ -3,8 +3,8 @@
 
 	vscrollService.$inject = ['$q'];
 	vscrollCtrl.$inject = ['$scope', '$element', '$window'];
-	vscrollPortYDirective.$inject = ['$rootScope', '$parse'];
-	vscrollPortXDirective.$inject = ['$rootScope', '$parse'];
+	vscrollPortYDirective.$inject = ['$rootScope'];
+	vscrollPortXDirective.$inject = ['$rootScope'];
 
 	angular.module('vscroll', [])
 			.service('vscroll', vscrollService)
@@ -16,21 +16,35 @@
 			.directive('vscrollColumn', vscrollColumnDirective)
 			.directive('vscrollMark', vscrollMarkDirective);
 
-	var getHeight = function (element) {
-		var height = element.offsetHeight,
-				style = getComputedStyle(element);
+	var extend = Object.assign || angular.extend;
+	var isUndef = angular.isUndefined;
+	var isNumber = angular.isNumber;
+	var isFunction = angular.isFunction;
+	var requestAnimationFrame =
+			window.requestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.msRequestAnimationFrame;
 
-		height += parseInt(style.marginTop) + parseInt(style.marginBottom);
-		return height;
-	};
+	function capitalize(text) {
+		return text[0].toUpperCase() + text.slice(1);
+	}
 
-	var getWidth = function (element) {
-		var width = element.offsetWidth,
-				style = getComputedStyle(element);
+	function sizeFactory(size, container, element, index) {
+		if (isFunction(size)) {
+			return function () {
+				return size(element, container.position + index);
+			}
+		}
 
-		width += parseInt(style.marginLeft) + parseInt(style.marginRight);
-		return width;
-	};
+		if (isNumber(size)) {
+			return function () {
+				return size;
+			}
+		}
+
+		throw new Error('vscroll invalid size option ' + size);
+	}
 
 	var findIndexAt = function (items, value) {
 		var length = items.length;
@@ -55,9 +69,9 @@
 
 	var invalidateFactory = function (items) {
 		return function (offsets, index, count) {
-			var threshold = items.length,
-					cursor = offsets.length,
-					diff = Math.min(count, threshold + index) - cursor;
+			var threshold = items.length;
+			var cursor = offsets.length;
+			var diff = Math.min(count, threshold + index) - cursor;
 
 			for (var i = threshold - diff; i < threshold; i++) {
 				var value = items[i]();
@@ -107,7 +121,7 @@
 		};
 
 		this.emit = function (e) {
-			var temp = angular.copy(events);
+			var temp = events.slice();
 			for (var i = 0, length = temp.length; i < length; i++) {
 				temp[i](e);
 			}
@@ -118,22 +132,24 @@
 		return function ($element) {
 			this.markup = {};
 
-			var self = this,
-					items = [],
-					max = 0,
-					offsets = [],
-					position = {index: 0, offset: 0, value: 0, lastOffset: 0},
-					layout = layoutFactory(
-							$element,
-							this.markup,
-							function () {
-								return self.context
-							}),
-					invalidate = layout.invalidateFactory(items),
-					move = layout.move,
-					getPosition = layout.getPosition,
-					itemSize = layout.itemSize,
-					viewSize = layout.viewSize;
+			var element = $element[0];
+			var self = this;
+			var items = [];
+			var max = 0;
+			var offsets = [];
+			var position = {index: 0, offset: 0, value: 0, lastOffset: 0};
+			var layout = layoutFactory(
+					element,
+					this.markup,
+					function () {
+						return self.context
+					});
+
+			var invalidate = layout.invalidateFactory(items);
+			var move = layout.move;
+			var getPosition = layout.getPosition;
+			var itemSize = layout.itemSize;
+			var viewSize = layout.viewSize;
 
 			var empty = function () {
 				return 0;
@@ -217,11 +233,11 @@
 				},
 
 				update: function (count, force) {
-					var self = this,
-							threshold = settings.threshold,
-							cursor = self.cursor,
-							prevPage = self.page,
-							page = Math.ceil((cursor + threshold) / threshold) - 1;
+					var self = this;
+					var threshold = settings.threshold;
+					var cursor = self.cursor;
+					var prevPage = self.page;
+					var page = Math.ceil((cursor + threshold) / threshold) - 1;
 
 
 					self.count = count;
@@ -229,7 +245,7 @@
 					if (total !== self.total) {
 						self.total = total;
 						self.updateEvent.emit({
-							force: angular.isUndefined(force) ? !!settings.rowHeight : force
+							force: isUndef(force) ? !!settings.rowHeight : force
 						});
 					}
 
@@ -244,7 +260,7 @@
 										self.force = true;
 
 										self.updateEvent.emit({
-											force: angular.isUndefined(force) ? !!settings.rowHeight : force
+											force: isUndef(force) ? !!settings.rowHeight : force
 										});
 									}
 								});
@@ -253,11 +269,11 @@
 							settings.fetch(0, threshold, deferred);
 						}
 						else {
+							var skip = (prevPage + 1) * threshold;
 							if (self.total < skip) {
 								deferred.resolve(self.total);
 							}
 							else {
-								var skip = (prevPage + 1) * threshold;
 								var take = (page - prevPage) * threshold;
 								settings.fetch(skip, take, deferred);
 							}
@@ -279,13 +295,25 @@
 				}
 			};
 
-			settings = angular.extend({
+			settings = extend({
 				threshold: 64,
 				fetch: function (skip, take, d) {
 					d.resolve(container.total);
 				},
-				rowHeight: 0,
-				columnHeight: 0,
+				rowHeight: function (element) {
+					var height = element.offsetHeight;
+					var style = getComputedStyle(element);
+
+					height += parseInt(style.marginTop) + parseInt(style.marginBottom);
+					return height;
+				},
+				columnWidth: function (element) {
+					var width = element.offsetWidth;
+					var style = getComputedStyle(element);
+
+					width += parseInt(style.marginLeft) + parseInt(style.marginRight);
+					return width;
+				},
 				resetTriggers: []
 			}, settings);
 
@@ -310,13 +338,13 @@
 				throw new Error('vscroll filter context is not set');
 			}
 
-			var settings = context.settings,
-					container = context.container,
-					view = container.items,
-					position = container.position,
-					cursor = container.cursor,
-					threshold = settings.threshold,
-					count = data.length;
+			var settings = context.settings;
+			var container = context.container;
+			var view = container.items;
+			var position = container.position;
+			var cursor = container.cursor;
+			var threshold = settings.threshold;
+			var count = data.length;
 
 			container.update(count);
 
@@ -324,8 +352,8 @@
 				if (container.force ||
 						(cursor <= count && cursor !== position)) {
 
-					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor),
-							last = Math.min(cursor + threshold, count);
+					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor);
+					var last = Math.min(cursor + threshold, count);
 
 					container.position = cursor;
 					container.drawEvent.emit({
@@ -349,102 +377,99 @@
 		};
 	}
 
-	function vscrollPortLinkFactory(type, canApply, $rootScope, $parse) {
-		function factory(scope, element, view, port) {
-			element[0].tabIndex = 0;
-			element.css('outline', 'none');
-			element.css('overflow-anchor', 'none');
-
-			return function (context) {
-				var position = {top: 0, left: 0, height: 0, width: 0},
-						container = context.container;
-
-				var scrollOff = view.scrollEvent.on(
-						function (e) {
-							if (canApply(e, position)) {
-								position = e;
-								if (container.count) {
-									container.apply(
-											function () {
-												container.cursor = port.update(container.count, e);
-											},
-											function () {
-												if (container.cursor !== container.position) {
-													if (!$rootScope.$$phase) {
-														scope.$digest();
-													}
-												}
-											});
-								}
-							}
-						});
-
-
-				var resizeOff = view.resizeEvent.on(
-						function (e) {
-							e.handled = context.settings.resetTriggers.indexOf('resize') < 0
-						}
-				);
-
-				var resetOff = container.resetEvent.on(
-						function () {
-							port.reset();
-							view.reset();
-						});
-
-				var updateOff = container.updateEvent.on(
-						function (e) {
-							if (e.force) {
-								container.cursor = port.invalidate(container.count, position);
-							}
-						});
-
-				scope.$on('$destroy', function () {
-					delete port.markup;
-
-					scrollOff();
-					resetOff();
-					updateOff();
-					resizeOff();
-				});
+	function vscrollPortLinkFactory(type, canApply, $rootScope) {
+		return function factory($scope, $element, $attrs, ctrls) {
+			var view = ctrls[0];
+			var port = ctrls[1];
+			var context = port.context;
+			if (!context) {
+				throw new Error('vscroll context is not setup for ' + type);
 			}
-		}
 
-		return function (scope, element, attrs, ctrls) {
-			var view = ctrls[0],
-					port = ctrls[1],
-					init = factory(scope, element, view, port);
+			var element = $element[0];
+			element.tabIndex = 0;
+			element.style.outline = 'none';
+			element.style.overflowAnchor = 'none';
 
-			var off = scope.$watch(
-					function () {
-						// waiting: while context is set
-						return $parse(attrs[type])(scope);
-					},
-					function (context) {
-						if (context) {
-							init(context);
-							port.context = context;
-							off();
+			var position = {top: 0, left: 0, height: 0, width: 0};
+			var container = context.container;
+
+			var emit = function () {
+				if (container.cursor !== container.position) {
+					// TODO: applyAsync?
+					if (!$rootScope.$$phase) {
+						$scope.$digest();
+					}
+				}
+			};
+
+			var invalidate = function () {
+				container.cursor = port.update(container.count, position);
+			};
+
+			var ticking = false;
+			var tick = function () {
+				container.apply(invalidate, emit);
+				ticking = false;
+			};
+
+			var scrollOff = view.scrollEvent.on(
+					function (e) {
+						if (canApply(e, position)) {
+							position = e;
+							if (container.count && !ticking) {
+								ticking = true;
+								requestAnimationFrame(tick);
+							}
 						}
 					});
-		};
+
+			var resizeOff = view.resizeEvent.on(
+					function (e) {
+						e.handled = context.settings.resetTriggers.indexOf('resize') < 0
+					});
+
+			var resetOff = container.resetEvent.on(
+					function () {
+						port.reset();
+						view.reset();
+					});
+
+			var updateOff = container.updateEvent.on(
+					function (e) {
+						if (e.force) {
+							container.cursor = port.invalidate(container.count, position);
+						}
+					});
+
+			$scope.$on('$destroy', function () {
+				delete port.markup;
+
+				scrollOff();
+				resetOff();
+				updateOff();
+				resizeOff();
+			});
+		}
 	}
 
 	function vscrollCtrl($scope, $element, $window) {
-		var self = this,
-				content = $element[0],
-				window = angular.element($window);
+		var self = this;
+		var content = $element[0];
+		var window = $window;
+		var scrollEvent = new Event();
+		var resizeEvent = new Event();
 
-		this.scrollEvent = new Event();
+		this.scrollEvent = scrollEvent;
+		this.resizeEvent = new Event();
+
 		this.reset = function () {
 			content.scrollTop = 0;
 			content.scrollLeft = 0;
 		};
 
-		this.resizeEvent = new Event();
-
 		var onScroll = function () {
-			self.scrollEvent.emit({
+			scrollEvent.emit({
 				width: content.scrollWidth,
 				height: content.scrollHeight,
 				top: content.scrollTop,
@@ -453,21 +478,20 @@
 		};
 
 		var onResize = function () {
-			const e = {handled: false};
-			self.resizeEvent.emit(e);
+			var e = {handled: false};
+			resizeEvent.emit(e);
 			if (!e.handled) {
 				self.reset();
 				onScroll();
 			}
 		};
 
-		$element.bind('scroll', onScroll);
-
-		window.bind('resize', onResize);
+		content.addEventListener('scroll', onScroll, {passive: true});
+		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
-			$element.unbind('scroll', onScroll);
-			window.unbind('resize', onResize);
+			content.removeEventListener('scroll', onScroll);
+			window.removeEventListener('resize', onResize);
 		});
 	}
 
@@ -478,130 +502,145 @@
 		};
 	}
 
-	function vscrollPortYDirective($rootScope, $parse) {
+	function yLayoutFactory(element, markup, context) {
+		var move = function (pos, value) {
+			if (markup.hasOwnProperty(pos)) {
+				var mark = markup[pos];
+				mark.style.height = value + 'px';
+			} else {
+				element.style['padding' + capitalize(pos)] = value + 'px';
+			}
+		};
+
+		var self = {
+			getPosition: function (offsets, view) {
+				var size = self.itemSize();
+				if (size) {
+					var index = Math.round(view.top / size);
+					return {
+						value: view.top,
+						index: index,
+						offset: view.top,
+						lastOffset: 0
+					};
+				}
+
+				return getPosition(offsets, view.top);
+			},
+			move: function (top, bottom) {
+				move('top', top);
+				move('bottom', bottom);
+			},
+			itemSize: function () {
+				var rowHeight = context().settings.rowHeight;
+				return isNumber(rowHeight) ? rowHeight : 0;
+			},
+			viewSize: function (view) {
+				return view.height;
+			},
+			invalidateFactory: function (items) {
+				var invalidate = invalidateFactory(items);
+				return function (offsets, index, count) {
+					var size = self.itemSize();
+					if (size) {
+						return;
+					}
+
+					return invalidate(offsets, index, count);
+				};
+			}
+		};
+
+		return self;
+	}
+
+	function vscrollPortYDirective($rootScope) {
 		return {
+			scope: true,
 			restrict: 'A',
-			controller: ['$element', vscrollPortCtrlFactory(function (element, markup, context) {
-				var move = function (pos, value) {
-					if (markup.hasOwnProperty(pos)) {
-						var mark = markup[pos];
-						mark.css('height', value + 'px');
-					} else {
-						element.css('padding-' + pos, value + 'px');
-					}
-				};
-
-				var self = {
-					getPosition: function (offsets, view) {
-						var size = self.itemSize();
-						if (size) {
-							var index = Math.round(view.top / size);
-							return {
-								value: view.top,
-								index: index,
-								offset: view.top,
-								lastOffset: 0
-							};
-						}
-
-						return getPosition(offsets, view.top);
-					},
-					move: function (top, bottom) {
-						move('top', top);
-						move('bottom', bottom);
-					},
-					itemSize: function () {
-						return context().settings.rowHeight;
-					},
-					viewSize: function (view) {
-						return view.height;
-					},
-					invalidateFactory: function (items) {
-						var invalidate = invalidateFactory(items);
-						return function (offsets, index, count) {
-							var size = self.itemSize();
-							if (size) {
-								return;
-							}
-
-							return invalidate(offsets, index, count);
-						};
-					}
-				};
-
-				return self;
-			})],
+			controller: ['$element', vscrollPortCtrlFactory(yLayoutFactory)],
 			require: ['^vscroll', 'vscrollPortY'],
+			controllerAs: '$portY',
+			bindToController: {
+				context: '<vscrollPortY'
+			},
 			link: vscrollPortLinkFactory(
 					'vscrollPortY',
 					function (newValue, oldValue) {
 						return !oldValue || newValue.top !== oldValue.top;
 					},
-					$rootScope,
-					$parse)
+					$rootScope)
 		};
 	}
 
-	function vscrollPortXDirective($rootScope, $parse) {
+	function xLayoutFactory(element, markup, context) {
+		var move = function (pos, value) {
+			if (markup.hasOwnProperty(pos)) {
+				var mark = markup[pos];
+				mark.style.width = value + 'px';
+			} else {
+				element.style['padding' + capitalize(pos)] = value + 'px';
+			}
+		};
+
+		var self = {
+			getPosition: function (offsets, view) {
+				var size = self.itemSize();
+				if (size) {
+					var index = Math.round(view.left / size);
+					return {
+						value: view.left,
+						index: index,
+						offset: size * index,
+						lastOffset: 0
+					};
+				}
+
+				return getPosition(offsets, view.left);
+			}, move: function (left, right) {
+				move('left', left);
+				move('right', right);
+			},
+			itemSize: function () {
+				var columnWidth = context().settings.columnWidth;
+				return isNumber(columnWidth) ? columnWidth : 0;
+			},
+			viewSize: function (view) {
+				return view.width;
+			},
+			invalidateFactory: function (items) {
+				var invalidate = invalidateFactory(items);
+				return function (offsets, index, count) {
+					var size = self.itemSize();
+					if (size) {
+						return;
+					}
+
+					return invalidate(offsets, index, count);
+				};
+			}
+		};
+
+		return self;
+	}
+
+	function vscrollPortXDirective($rootScope) {
 		return {
+			scope: true,
 			restrict: 'A',
-			controller: ['$element', vscrollPortCtrlFactory(function (element, markup, context) {
-				var move = function (pos, value) {
-					if (markup.hasOwnProperty(pos)) {
-						var mark = markup[pos];
-						mark.css('width', value + 'px');
-					} else {
-						element.css('padding-' + pos, value + 'px');
-					}
-				};
-
-				var self = {
-					getPosition: function (offsets, view) {
-						var size = self.itemSize();
-						if (size) {
-							var index = Math.round(view.left / size);
-							return {
-								value: view.left,
-								index: index,
-								offset: size * index,
-								lastOffset: 0
-							};
-						}
-
-						return getPosition(offsets, view.left);
-					}, move: function (left, right) {
-						move('left', left);
-						move('right', right);
-					},
-					itemSize: function () {
-						return context().settings.columnWidth;
-					},
-					viewSize: function (view) {
-						return view.width;
-					},
-					invalidateFactory: function (items) {
-						var invalidate = invalidateFactory(items);
-						return function (offsets, index, count) {
-							var size = self.itemSize();
-							if (size) {
-								return;
-							}
-
-							return invalidate(offsets, index, count);
-						};
-					}
-				};
-
-				return self;
-			})],
+			controller: ['$element', vscrollPortCtrlFactory(xLayoutFactory)],
 			require: ['^vscroll', 'vscrollPortX'],
+			controllerAs: '$portX',
+			bindToController: {
+				context: '<vscrollPortX'
+			},
 			link: vscrollPortLinkFactory(
 					'vscrollPortX',
 					function (newValue, oldValue) {
 						return !oldValue || newValue.left !== oldValue.left;
 					},
-					$rootScope,
-					$parse)
+					$rootScope
+			)
 		};
 	}
 
@@ -609,19 +648,18 @@
 		return {
 			restrict: 'A',
 			require: '^vscrollPortY',
-			link: function (scope, element, attrs, port) {
-				var index = parseInt(attrs.vscrollRow);
+			link: function ($scope, $element, $attrs, port) {
+				var index = parseInt($attrs.vscrollRow);
 				if (isNaN(index)) {
-					throw new Error('Incorrect index "' + attrs.vscrollRow + '" for vscroll row');
+					throw new Error('vscroll incorrect index "' + $attrs.vscrollRow + '" for row');
 				}
 
-				var row = element[0],
-						size = function () {
-							return port.context.settings.rowHeight || getHeight(row);
-						};
+				var row = $element[0];
+				var context = port.context;
+				var size = sizeFactory(context.settings.rowHeight, context.container, row, index);
 
 				port.setItem(index, size);
-				scope.$on('$destroy', function () {
+				$scope.$on('$destroy', function () {
 					port.removeItem(index);
 				});
 			}
@@ -632,19 +670,17 @@
 		return {
 			restrict: 'A',
 			require: '^vscrollPortX',
-			link: function (scope, element, attrs, port) {
-				var index = parseInt(attrs.vscrollColumn);
+			link: function ($scope, $element, $attrs, port) {
+				var index = parseInt($attrs.vscrollColumn);
 				if (isNaN(index)) {
-					throw new Error('Incorrect index "' + attrs.vscrollColumn + '" for vscroll column')
+					throw new Error('vscroll incorrect index "' + $attrs.vscrollColumn + '" for column')
 				}
 
-				var column = element[0],
-						size = function () {
-							return port.context.settings.columnHeight || getWidth(column);
-						};
-
+				var column = $element[0];
+				var context = port.context;
+				var size = sizeFactory(context.settings.columnWidth, context.container, column, index);
 				port.setItem(index, size);
-				scope.$on('$destroy', function () {
+				$scope.$on('$destroy', function () {
 					port.removeItem(index);
 				});
 			}
@@ -655,19 +691,21 @@
 		return {
 			restrict: 'A',
 			require: ['^?vscrollPortX', '^?vscrollPortY'],
-			link: function (scope, element, attrs, ctrls) {
+			link: function ($scope, $element, $attrs, ctrls) {
+				var element = $element[0];
+				var mark = $attrs.vscrollMark;
 				var ports = ctrls.filter(function (ctrl) {
-					return ctrl;
+					return !!ctrl;
 				});
 
-				angular.forEach(ports, function (port) {
-					port.markup[attrs.vscrollMark] = element;
+				ports.forEach(function (port) {
+					port.markup[mark] = element;
 				});
 
-				scope.$on('$destroy', function () {
-					angular.forEach(ports, function (port) {
+				$scope.$on('$destroy', function () {
+					ports.forEach(function (port) {
 						if (port.markup) {
-							port.markup[attrs.vscrollMark] = null;
+							port.markup[mark] = null;
 						}
 					});
 				});
