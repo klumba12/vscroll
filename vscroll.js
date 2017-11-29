@@ -19,6 +19,11 @@
 	var isUndef = angular.isUndefined;
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
+	var requestAnimationFrame =
+			window.requestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.msRequestAnimationFrame;
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -397,20 +402,23 @@
 				}
 			};
 
-			var update = function (e) {
-				var invalidate = function () {
-					container.cursor = port.update(container.count, e);
-				};
+			var invalidate = function () {
+				container.cursor = port.update(container.count, position);
+			};
 
+			var ticking = false;
+			var tick = function () {
 				container.apply(invalidate, emit);
+				ticking = false;
 			};
 
 			var scrollOff = view.scrollEvent.on(
 					function (e) {
 						if (canApply(e, position)) {
 							position = e;
-							if (container.count) {
-								update(e);
+							if (container.count && !ticking) {
+								ticking = true;
+								requestAnimationFrame(tick);
 							}
 						}
 					});
