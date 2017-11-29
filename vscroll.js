@@ -3,8 +3,8 @@
 
 	vscrollService.$inject = ['$q'];
 	vscrollCtrl.$inject = ['$scope', '$element', '$window'];
-	vscrollPortYDirective.$inject = ['$rootScope'];
-	vscrollPortXDirective.$inject = ['$rootScope'];
+	vscrollPortYDirective.$inject = [];
+	vscrollPortXDirective.$inject = [];
 
 	angular.module('vscroll', [])
 			.service('vscroll', vscrollService)
@@ -228,8 +228,7 @@
 				drawEvent: new Event(),
 
 				apply: function (f, emit) {
-					f();
-					emit();
+					emit(f);
 				},
 
 				update: function (count, force) {
@@ -377,7 +376,7 @@
 		};
 	}
 
-	function vscrollPortLinkFactory(type, canApply, $rootScope) {
+	function vscrollPortLinkFactory(type, canApply) {
 		return function factory($scope, $element, $attrs, ctrls) {
 			var view = ctrls[0];
 			var port = ctrls[1];
@@ -394,13 +393,8 @@
 			var position = {top: 0, left: 0, height: 0, width: 0};
 			var container = context.container;
 
-			var emit = function () {
-				if (container.cursor !== container.position) {
-					// TODO: applyAsync?
-					if (!$rootScope.$$phase) {
-						$scope.$digest();
-					}
-				}
+			var emit = function (f) {
+				$scope.$evalAsync(f);
 			};
 
 			var invalidate = function () {
@@ -554,7 +548,7 @@
 		return self;
 	}
 
-	function vscrollPortYDirective($rootScope) {
+	function vscrollPortYDirective() {
 		return {
 			scope: true,
 			restrict: 'A',
@@ -568,8 +562,7 @@
 					'vscrollPortY',
 					function (newValue, oldValue) {
 						return !oldValue || newValue.top !== oldValue.top;
-					},
-					$rootScope)
+					})
 		};
 	}
 
@@ -624,7 +617,7 @@
 		return self;
 	}
 
-	function vscrollPortXDirective($rootScope) {
+	function vscrollPortXDirective() {
 		return {
 			scope: true,
 			restrict: 'A',
@@ -638,8 +631,7 @@
 					'vscrollPortX',
 					function (newValue, oldValue) {
 						return !oldValue || newValue.left !== oldValue.left;
-					},
-					$rootScope
+					}
 			)
 		};
 	}
