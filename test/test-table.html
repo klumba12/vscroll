@@ -85,13 +85,10 @@
 
 		$scope.settingsR = $scope.rowContext.settings;
 		$scope.containerR = $scope.rowContext.container;
-//		$scope.containerR.apply = function (f, emit) {
-//			f();
-//			if ($scope.containerR.cursor !== $scope.containerR.position) {
-//				console.log('apply y');
-//				$scope.$digest();
-//			}
-//		};
+		$scope.containerR.apply = function (f, emit) {
+			console.log('apply y');
+			emit(f);
+		};
 
 		$scope.columnContext = vscroll({
 			columnWidth: function () {
@@ -116,14 +113,10 @@
 
 		$scope.settingsC = $scope.columnContext.settings;
 		$scope.containerC = $scope.columnContext.container;
-//		$scope.containerC.apply = function (f, emit) {
-//			f();
-//
-//			if ($scope.containerC.cursor !== $scope.containerC.position) {
-//				console.log('apply x');
-//				$scope.$digest();
-//			}
-//		};
+		$scope.containerC.apply = function (f, emit) {
+			console.log('apply x');
+			emit(f);
+		};
 	}]);
 </script>
 
