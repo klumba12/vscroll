@@ -388,23 +388,29 @@
 			var position = {top: 0, left: 0, height: 0, width: 0};
 			var container = context.container;
 
+			var emit = function () {
+				if (container.cursor !== container.position) {
+					// TODO: applyAsync?
+					if (!$rootScope.$$phase) {
+						$scope.$digest();
+					}
+				}
+			};
+
+			var update = function (e) {
+				var invalidate = function () {
+					container.cursor = port.update(container.count, e);
+				};
+
+				container.apply(invalidate, emit);
+			};
+
 			var scrollOff = view.scrollEvent.on(
 					function (e) {
 						if (canApply(e, position)) {
 							position = e;
 							if (container.count) {
-								container.apply(
-										function () {
-											container.cursor = port.update(container.count, e);
-										},
-										function () {
-											if (container.cursor !== container.position) {
-												// TODO: applyAsync?
-												if (!$rootScope.$$phase) {
-													$scope.$digest();
-												}
-											}
-										});
+								update(e);
 							}
 						}
 					});
