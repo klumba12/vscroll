@@ -16,6 +16,7 @@
 			.directive('vscrollColumn', vscrollColumnDirective)
 			.directive('vscrollMark', vscrollMarkDirective);
 
+	var extend = Object.assign || angular.extend;
 	var isUndef = angular.isUndefined;
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
@@ -294,7 +295,7 @@
 				}
 			};
 
-			settings = Object.assign({
+			settings = extend({
 				threshold: 64,
 				fetch: function (skip, take, d) {
 					d.resolve(container.total);
@@ -467,7 +468,6 @@
 			content.scrollLeft = 0;
 		};
 
-
 		var onScroll = function () {
 			scrollEvent.emit({
 				width: content.scrollWidth,
@@ -486,7 +486,7 @@
 			}
 		};
 
-		content.addEventListener('scroll', onScroll);
+		content.addEventListener('scroll', onScroll, {passive: true});
 		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
