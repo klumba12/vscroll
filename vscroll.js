@@ -237,14 +237,16 @@
 					var cursor = self.cursor;
 					var prevPage = self.page;
 					var page = Math.ceil((cursor + threshold) / threshold) - 1;
-
+					var prevCount = self.count;
+					var total = Math.max(self.total, count);
 
 					self.count = count;
-					var total = Math.max(self.total, count);
-					if (total !== self.total) {
+					if (total !== self.total || prevCount !== count) {
 						self.total = total;
 						self.updateEvent.emit({
-							force: isUndef(force) ? !!settings.rowHeight : force
+							force: isUndef(force)
+									? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+									: force
 						});
 					}
 
@@ -259,7 +261,9 @@
 										self.force = true;
 
 										self.updateEvent.emit({
-											force: isUndef(force) ? !!settings.rowHeight : force
+											force: isUndef(force)
+													? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+													: force
 										});
 									}
 								});
