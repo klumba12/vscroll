@@ -128,6 +128,22 @@
         };
     };
 
+    function placeholderBitmap(width, height) {
+        var minWidth = Math.max(width, 1);
+        var minHeight = Math.max(height, 1);
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(width * 2, 1);
+        canvas.height = Math.max(height * 2, 1);
+
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+        ctx.fillRect(0, 0, minWidth, minHeight);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+        ctx.fillRect(width, height, minWidth, minHeight);
+
+        return canvas.toDataURL();
+    }
+
     function vscrollPortCtrlFactory(layoutFactory) {
         return function ($element) {
             this.markup = {};
@@ -317,6 +333,8 @@
                     width += parseInt(style.marginLeft) + parseInt(style.marginRight);
                     return width;
                 },
+                placeholderHeight: 0,
+                placeholderWidth: 0,
                 resetTriggers: []
             }, settings);
 
@@ -396,6 +414,7 @@
 
             var position = {top: 0, left: 0, height: 0, width: 0};
             var container = context.container;
+            var settings = context.settings;
 
             var emit = function (f) {
                 $scope.$evalAsync(f);
@@ -411,6 +430,10 @@
                 ticking = false;
             };
 
+            if (settings.placeholderHeight > 0 || this.placeholderWidth > 0) {
+                view.drawPlaceholder(settings.placeholderHeight, settings.placeholderWidth);
+            }
+
             var scrollOff = view.scrollEvent.on(
                 function (e) {
                     if (canApply(e, position)) {
@@ -424,7 +447,7 @@
 
             var resizeOff = view.resizeEvent.on(
                 function (e) {
-                    e.handled = context.settings.resetTriggers.indexOf('resize') < 0
+                    e.handled = settings.resetTriggers.indexOf('resize') < 0
                 });
 
             var resetOff = container.resetEvent.on(
@@ -439,7 +462,7 @@
                             view.resetY();
                             break;
                         default:
-                            throw Error('vscroll unssuported port type ' + type);
+                            throw Error('vscroll unsupported port type ' + type);
                     }
                 });
 
@@ -471,6 +494,30 @@
         this.scrollEvent = scrollEvent;
         this.resizeEvent = new Event();
 
+        var placeholder = null;
+        var backgroundImage = null;
+        var backgroundRepeat = null;
+
+        this.drawPlaceholder = function (width, height) {
+            var style = content.style;
+            if (!placeholder) {
+                placeholder = placeholderBitmap(width || content.clientWidth, height || content.clientHeight);
+                backgroundImage = style.backgroundImage;
+                backgroundRepeat = style.backgroundRepeat;
+            }
+
+            style.backgroundImage = 'url(' + placeholder + ')';
+            style.backgroundRepeat = 'repeat';
+        };
+
+        this.resetPlaceholder = function () {
+            if (placeholder) {
+                var style = content.style;
+                style.backgroundImage = backgroundImage;
+                style.backgroundRepeat = backgroundRepeat;
+            }
+        };
+
         this.resetX = function () {
             content.scrollLeft = 0;
         };
@@ -494,6 +541,7 @@
             if (!e.handled) {
                 self.resetX();
                 self.resetY();
+                self.resetPlaceholder();
 
                 onScroll();
             }
