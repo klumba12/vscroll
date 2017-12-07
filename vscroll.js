@@ -431,7 +431,9 @@
             };
 
             if (settings.placeholderHeight > 0 || this.placeholderWidth > 0) {
-                view.drawPlaceholder(settings.placeholderHeight, settings.placeholderWidth);
+                var width = settings.placeholderWidth || (isNumber(settings.columnWidth) && settings.columnWidth);
+                var height = settings.placeholderHeight || (isNumber(settings.rowHeight) && settings.rowHeight);
+                view.drawPlaceholder(width, height);
             }
 
             var scrollOff = view.scrollEvent.on(
