@@ -5,23 +5,28 @@
 	<script src="../bower_components/angular/angular.js"></script>
 	<script src="../vscroll.js"></script>
 	<style>
+		html,
+		body {
+			height: 100%;
+			width: 100%;
+		}
+
 		table {
-			border-spacing: 1;
+			border-spacing: 0;
 		}
 
 		table td {
-			padding: 0;
+			padding: 1px;
 		}
 	</style>
 </head>
 
 <body ng-controller="vscrollTable">
-<div vscroll style="height: 600px; width: 100%; overflow: auto;">
+<div vscroll style="height: 90%; width: 90%; overflow: auto;">
 	<table vscroll-port-x="columnContext" vscroll-port-y="rowContext">
 		<tr vscroll-row="{{::$index}}" ng-repeat="row in data | vscroll: rowContext track by $index">
 			<td vscroll-column="{{::$index}}" ng-repeat="color in row | vscroll: columnContext track by $index">
-				<div ng-style="{'background-color': '#' + data[rowContext.container.position+$parent.$index][columnContext.container.position+$index]}"
-					  style="width: 10px; height: 10px; ">
+				<div ng-style="{'background-color': bg($parent.$index, $index)}" style="width: 10px; height: 10px; ">
 				</div>
 			</td>
 		</tr>
@@ -29,29 +34,65 @@
 </div>
 
 <ul style="list-style: none">
-	<li><b>settings.threshold:</b> {{settingsR.threshold}}</li>
-	<li><b>container.total:</b> {{containerR.total}}</li>
-	<li><b>container.count:</b> {{containerR.count}}</li>
-	<li><b>container.position:</b> {{containerR.position}}</li>
-	<li><b>container.cursor:</b>{{containerR.cursor}}</li>
-	<li><b>container.page:</b> {{containerR.page}}</li>
-	<li><b>container.force:</b> {{containerR.force}}</li>
-	<li><b>container.items.length:</b> {{containerR.items.length}}</li>
-	<li><b>container.items[first]:</b> {{containerR.items[0]}}</li>
-	<li><b>container.items[last]:</b> {{containerR.items[containerR.items.length - 1]}}</li>
+	<li>
+		<b>settings.threshold:</b> {{settingsR.threshold}}
+	</li>
+	<li>
+		<b>container.total:</b> {{containerR.total}}
+	</li>
+	<li>
+		<b>container.count:</b> {{containerR.count}}
+	</li>
+	<li>
+		<b>container.position:</b> {{containerR.position}}
+	</li>
+	<li>
+		<b>container.cursor:</b>{{containerR.cursor}}
+	</li>
+	<li>
+		<b>container.page:</b> {{containerR.page}}
+	</li>
+	<li>
+		<b>container.force:</b> {{containerR.force}}
+	</li>
+	<li>
+		<b>container.items.length:</b> {{containerR.items.length}}
+	</li>
+	<!--<li><b>container.items[first]:</b> {{containerR.items[0]}}</li>-->
+	<!--<li><b>container.items[last]:</b> {{containerR.items[containerR.items.length - 1]}}</li>-->
 </ul>
 
 <ul style="list-style: none">
-	<li><b>settings.threshold:</b> {{settingsC.threshold}}</li>
-	<li><b>container.total:</b> {{containerC.total}}</li>
-	<li><b>container.count:</b> {{containerC.count}}</li>
-	<li><b>container.position:</b> {{containerC.position}}</li>
-	<li><b>container.cursor:</b>{{containerC.cursor}}</li>
-	<li><b>container.page:</b> {{containerC.page}}</li>
-	<li><b>container.force:</b> {{containerC.force}}</li>
-	<li><b>container.items.length:</b> {{containerC.items.length}}</li>
-	<li><b>container.items[first]:</b> {{containerC.items[0]}}</li>
-	<li><b>container.items[last]:</b> {{containerC.items[containerC.items.length - 1]}}</li>
+	<li>
+		<b>settings.threshold:</b> {{settingsC.threshold}}
+	</li>
+	<li>
+		<b>container.total:</b> {{containerC.total}}
+	</li>
+	<li>
+		<b>container.count:</b> {{containerC.count}}
+	</li>
+	<li>
+		<b>container.position:</b> {{containerC.position}}
+	</li>
+	<li>
+		<b>container.cursor:</b>{{containerC.cursor}}
+	</li>
+	<li>
+		<b>container.page:</b> {{containerC.page}}
+	</li>
+	<li>
+		<b>container.force:</b> {{containerC.force}}
+	</li>
+	<li>
+		<b>container.items.length:</b> {{containerC.items.length}}
+	</li>
+	<li>
+		<b>container.items[first]:</b> {{containerC.items[0]}}
+	</li>
+	<li>
+		<b>container.items[last]:</b> {{containerC.items[containerC.items.length - 1]}}
+	</li>
 </ul>
 
 <script language="javascript">
@@ -59,14 +100,16 @@
 	app.controller('vscrollTable', ['$scope', 'vscroll', '$window', function ($scope, vscroll, $window) {
 		var rows = 0;
 		var columns = 0;
-		var size = 12;
+		var size = 11.33;
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
+			placeholderHeight: size,
+			placeholderWidth: size,
 			rowHeight: function () {
 				return size;
 			},
-			threshold: Math.ceil($window.innerHeight / size) + 1,
+			threshold: Math.ceil($window.innerHeight / size) + 10,
 			fetch: function (skip, take, d) {
 				console.log('row update requested: skip ' + skip);
 				console.log('row update requested: take ' + take);
@@ -94,7 +137,7 @@
 			columnWidth: function () {
 				return size;
 			},
-			threshold: Math.ceil($window.innerWidth / size) + 1,
+			threshold: Math.ceil($window.innerWidth / size) + 10,
 			fetch: function (skip, take, d) {
 				console.log('col update requested: skip ' + skip);
 				console.log('col update requested: take ' + take);
@@ -117,11 +160,16 @@
 			console.log('apply x');
 			emit(f);
 		};
+
+		var data = $scope.data;
+		var containerX = $scope.rowContext.container;
+		var containerY = $scope.columnContext.container;
+		$scope.bg = function (row, col) {
+			return '#' + data[containerX.position + row][containerY.position + col];
+		}
 	}]);
 </script>
 
 </body>
 
 </html>
-
-                
