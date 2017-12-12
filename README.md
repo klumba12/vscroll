@@ -27,7 +27,7 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
     }
 
     $scope.vscrollContext = vscroll({threshold: 30});
-}
+}]);
 ```
 ### API
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
@@ -76,7 +76,18 @@ vscroll({
                	// it says that next page can be fetched
                	d.resolve(data.length + take);
             });
-        }		
+        },
+    /**
+     * The width of an placeholder background image.
+     * @default 0.
+     */
+    placeholderWidth: 100,
+    
+    /**
+     * The height of an placeholder background image.
+     * @default 0.
+     */
+    placeholderHeight: 200
 })
 ```
 ### HTML markup
