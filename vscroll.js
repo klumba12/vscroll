@@ -309,7 +309,9 @@
 					this.items = [];
 
 					this.force = true;
-					this.resetEvent.emit();
+
+					var e = {handled: false, source: 'container'};
+					this.resetEvent.emit(e);
 					this.update(0, true);
 				}
 			};
@@ -335,7 +337,7 @@
 				},
 				placeholderHeight: 0,
 				placeholderWidth: 0,
-				resetTriggers: []
+				resetTriggers: ['resize']
 			}, settings);
 
 			container.update(0, true);
@@ -447,13 +449,22 @@
 						}
 					});
 
-			var resizeOff = view.resizeEvent.on(
+			var viewResetOff = view.resetEvent.on(
 					function (e) {
-						e.handled = settings.resetTriggers.indexOf('resize') < 0
+						if (e.handled) {
+							return;
+						}
+
+						e.handled = settings.resetTriggers.indexOf(e.source) < 0;
+						container.resetEvent.emit(e);
 					});
 
-			var resetOff = container.resetEvent.on(
-					function () {
+			var containerResetOff = container.resetEvent.on(
+					function (e) {
+						if (e.handled) {
+							return;
+						}
+
 						port.reset();
 
 						switch (type) {
@@ -479,9 +490,9 @@
 				delete port.markup;
 
 				scrollOff();
-				resetOff();
 				updateOff();
-				resizeOff();
+				containerResetOff();
+				viewResetOff();
 			});
 		}
 	}
@@ -491,33 +502,17 @@
 		var content = $element[0];
 		var window = $window;
 		var scrollEvent = new Event();
-		var resizeEvent = new Event();
+		var resetEvent = new Event();
 
 		this.scrollEvent = scrollEvent;
-		this.resizeEvent = new Event();
-
-		var placeholder = null;
-		var backgroundImage = null;
-		var backgroundRepeat = null;
+		this.resetEvent = resetEvent;
 
 		this.drawPlaceholder = function (width, height) {
 			var style = content.style;
-			if (!placeholder) {
-				placeholder = placeholderBitmap(width || content.clientWidth, height || content.clientHeight);
-				backgroundImage = style.backgroundImage;
-				backgroundRepeat = style.backgroundRepeat;
-			}
+			var placeholder = placeholderBitmap(width || content.clientWidth, height || content.clientHeight);
 
 			style.backgroundImage = 'url(' + placeholder + ')';
 			style.backgroundRepeat = 'repeat';
-		};
-
-		this.resetPlaceholder = function () {
-			if (placeholder) {
-				var style = content.style;
-				style.backgroundImage = backgroundImage;
-				style.backgroundRepeat = backgroundRepeat;
-			}
 		};
 
 		this.resetX = function () {
@@ -538,13 +533,11 @@
 		};
 
 		var onResize = function () {
-			var e = {handled: false};
-			resizeEvent.emit(e);
+			var e = {handled: false, source: 'resize'};
+			resetEvent.emit(e);
 			if (!e.handled) {
 				self.resetX();
 				self.resetY();
-				self.resetPlaceholder();
-
 				onScroll();
 			}
 		};
