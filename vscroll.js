@@ -498,7 +498,6 @@
 	}
 
 	function vscrollCtrl($scope, $element, $window) {
-		var self = this;
 		var content = $element[0];
 		var window = $window;
 		var scrollEvent = new Event();
@@ -535,11 +534,6 @@
 		var onResize = function () {
 			var e = {handled: false, source: 'resize'};
 			resetEvent.emit(e);
-			if (!e.handled) {
-				self.resetX();
-				self.resetY();
-				onScroll();
-			}
 		};
 
 		content.addEventListener('scroll', onScroll, {passive: true});
