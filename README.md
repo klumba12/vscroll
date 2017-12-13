@@ -10,6 +10,9 @@ Code licensed under MIT license.
 http://klumba12.github.io/vscroll/
 ## Installing via Bower
 `bower install vscroll`
+## Installing via Npm
+You need to add next line to your package.json file:  
+`"vscroll": "https://github.com/klumba12/vscroll"`
 ## Get Started
 ### Module
 Don't forget to include vscroll module!
@@ -27,7 +30,7 @@ app.controller('vscrollTest', ['$scope', 'vscroll', function ($scope, vscroll) {
     }
 
     $scope.vscrollContext = vscroll({threshold: 30});
-}
+}]);
 ```
 ### API
 vscroll service returns instance that connects user settings, scroll port and scroll filter.
@@ -76,7 +79,24 @@ vscroll({
                	// it says that next page can be fetched
                	d.resolve(data.length + take);
             });
-        }		
+        },
+    /**
+     * The width of an placeholder background image.
+     * @default 0.
+     */
+    placeholderWidth: 100,
+    
+    /**
+     * The height of an placeholder background image.
+     * @default 0.
+     */
+    placeholderHeight: 200,
+    
+    /**
+     * Array of triggers to invoke reset action.
+     * @default ['resize']
+     */
+    resetTriggers: []
 })
 ```
 ### HTML markup
