@@ -40,7 +40,7 @@ vscroll({
      /**
       * The height of an element, can be number or function. 
       * Recommendation is to override the default function, because it used getComputedStyle internally.
-      * @param {HTMLElement) element.
+      * @param (HTMLElement) element.
       * @param (number) index of element.
       * @default function that returns offsetHeight + margin.top + margin.bottom.
       */
@@ -50,7 +50,7 @@ vscroll({
      /**
       * The width of an element, can be number or function.
       * Recommendation is to override the default function, because it used getComputedStyle internally.
-      * @param {HTMLElement) element.
+      * @param (HTMLElement) element.
       * @param (number) index of element.
       * @default function that returns offsetWidth + margin.left + margin.right.
       */
