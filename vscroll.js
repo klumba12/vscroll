@@ -7,24 +7,43 @@
 	vscrollPortXDirective.$inject = [];
 
 	angular.module('vscroll', [])
-			.service('vscroll', vscrollService)
-			.filter('vscroll', vscrollFilter)
-			.directive('vscroll', vscrollDirective)
-			.directive('vscrollPortY', vscrollPortYDirective)
-			.directive('vscrollPortX', vscrollPortXDirective)
-			.directive('vscrollRow', vscrollRowDirective)
-			.directive('vscrollColumn', vscrollColumnDirective)
-			.directive('vscrollMark', vscrollMarkDirective);
+		.service('vscroll', vscrollService)
+		.filter('vscroll', vscrollFilter)
+		.directive('vscroll', vscrollDirective)
+		.directive('vscrollPortY', vscrollPortYDirective)
+		.directive('vscrollPortX', vscrollPortXDirective)
+		.directive('vscrollRow', vscrollRowDirective)
+		.directive('vscrollColumn', vscrollColumnDirective)
+		.directive('vscrollMark', vscrollMarkDirective);
 
 	var extend = Object.assign || angular.extend;
 	var isUndef = angular.isUndefined;
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
-	var rAF =
-			window.requestAnimationFrame ||
+
+	var rAF;
+	var fastdom;
+	if (window.fastdom) {
+		fastdom = window.fastdom;
+		rAF = function (f) {
+			f();
+		};
+	} else {
+		rAf = window.requestAnimationFrame ||
 			window.mozRequestAnimationFrame ||
 			window.webkitRequestAnimationFrame ||
 			window.msRequestAnimationFrame;
+
+		fastdom = {
+			mutate: function (f) {
+				f();
+			},
+			measure: function (f) {
+				f();
+			}
+		};
+	}
+
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -153,13 +172,13 @@
 			var items = [];
 			var max = 0;
 			var offsets = [];
-			var position = {index: 0, offset: 0, value: 0, lastOffset: 0};
+			var position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
 			var layout = layoutFactory(
-					element,
-					this.markup,
-					function () {
-						return self.context
-					});
+				element,
+				this.markup,
+				function () {
+					return self.context
+				});
 
 			var invalidate = layout.invalidateFactory(items);
 			var move = layout.move;
@@ -179,8 +198,8 @@
 				if (offset >= 0) {
 					var size = itemSize();
 					max = size
-							? Math.max(0, size * (count - self.context.settings.threshold))
-							: viewSize(view) < position.lastOffset ? Math.max(max, position.offset) : max;
+						? Math.max(0, size * (count - self.context.settings.threshold))
+						: viewSize(view) < position.lastOffset ? Math.max(max, position.offset) : max;
 
 					var frame1 = Math.max(0, position.offset);
 					var frame2 = Math.max(0, max - frame1);
@@ -200,7 +219,7 @@
 				max = 0;
 				//items = [];
 				offsets = [];
-				position = {index: 0, offset: 0, value: 0, lastOffset: 0};
+				position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
 				move(0, 0);
 			};
 
@@ -261,8 +280,8 @@
 						self.total = total;
 						self.updateEvent.emit({
 							force: isUndef(force)
-									? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
-									: force
+								? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+								: force
 						});
 					}
 
@@ -271,18 +290,18 @@
 
 						var deferred = $q.defer();
 						deferred.promise
-								.then(function (count) {
-									if (count !== self.total) {
-										self.total = count;
-										self.force = true;
+							.then(function (count) {
+								if (count !== self.total) {
+									self.total = count;
+									self.force = true;
 
-										self.updateEvent.emit({
-											force: isUndef(force)
-													? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
-													: force
-										});
-									}
-								});
+									self.updateEvent.emit({
+										force: isUndef(force)
+											? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+											: force
+									});
+								}
+							});
 
 						if (page === 0) {
 							settings.fetch(0, threshold, deferred);
@@ -310,7 +329,7 @@
 
 					this.force = true;
 
-					var e = {handled: false, source: 'container'};
+					var e = { handled: false, source: 'container' };
 					this.resetEvent.emit(e);
 					this.update(0, true);
 				}
@@ -373,7 +392,7 @@
 
 			if (count) {
 				if (container.force ||
-						(cursor <= count && cursor !== position)) {
+					(cursor <= count && cursor !== position)) {
 
 					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor);
 					var last = Math.min(cursor + threshold, count);
@@ -414,7 +433,7 @@
 			element.style.outline = 'none';
 			element.style.overflowAnchor = 'none';
 
-			var position = {top: 0, left: 0, height: 0, width: 0};
+			var position = { top: 0, left: 0, height: 0, width: 0 };
 			var container = context.container;
 			var settings = context.settings;
 
@@ -439,52 +458,52 @@
 			}
 
 			var scrollOff = view.scrollEvent.on(
-					function (e) {
-						if (canApply(e, position)) {
-							position = e;
-							if (container.count && !ticking) {
-								ticking = true;
-								rAF(tick);
-							}
+				function (e) {
+					if (canApply(e, position)) {
+						position = e;
+						if (container.count && !ticking) {
+							ticking = true;
+							rAF(tick);
 						}
-					});
+					}
+				});
 
 			var viewResetOff = view.resetEvent.on(
-					function (e) {
-						if (e.handled) {
-							return;
-						}
+				function (e) {
+					if (e.handled) {
+						return;
+					}
 
-						e.handled = settings.resetTriggers.indexOf(e.source) < 0;
-						container.resetEvent.emit(e);
-					});
+					e.handled = settings.resetTriggers.indexOf(e.source) < 0;
+					container.resetEvent.emit(e);
+				});
 
 			var containerResetOff = container.resetEvent.on(
-					function (e) {
-						if (e.handled) {
-							return;
-						}
+				function (e) {
+					if (e.handled) {
+						return;
+					}
 
-						port.reset();
+					port.reset();
 
-						switch (type) {
-							case 'vscrollPortX':
-								view.resetX();
-								break;
-							case 'vscrollPortY':
-								view.resetY();
-								break;
-							default:
-								throw Error('vscroll unsupported port type ' + type);
-						}
-					});
+					switch (type) {
+						case 'vscrollPortX':
+							view.resetX();
+							break;
+						case 'vscrollPortY':
+							view.resetY();
+							break;
+						default:
+							throw Error('vscroll unsupported port type ' + type);
+					}
+				});
 
 			var updateOff = container.updateEvent.on(
-					function (e) {
-						if (e.force) {
-							container.cursor = port.invalidate(container.count, position);
-						}
-					});
+				function (e) {
+					if (e.force) {
+						container.cursor = port.invalidate(container.count, position);
+					}
+				});
 
 			$scope.$on('$destroy', function () {
 				delete port.markup;
@@ -523,20 +542,22 @@
 		};
 
 		var onScroll = function () {
-			scrollEvent.emit({
-				width: content.scrollWidth,
-				height: content.scrollHeight,
-				top: content.scrollTop,
-				left: content.scrollLeft
+			fastdom.measure(function () {
+				scrollEvent.emit({
+					width: content.scrollWidth,
+					height: content.scrollHeight,
+					top: content.scrollTop,
+					left: content.scrollLeft
+				});
 			});
 		};
 
 		var onResize = function () {
-			var e = {handled: false, source: 'resize'};
+			var e = { handled: false, source: 'resize' };
 			resetEvent.emit(e);
 		};
 
-		content.addEventListener('scroll', onScroll, {passive: true});
+		content.addEventListener('scroll', onScroll, { passive: true });
 		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
@@ -554,12 +575,14 @@
 
 	function yLayoutFactory(element, markup, context) {
 		var move = function (pos, value) {
-			if (markup.hasOwnProperty(pos)) {
-				var mark = markup[pos];
-				mark.style.height = value + 'px';
-			} else {
-				element.style['padding' + capitalize(pos)] = value + 'px';
-			}
+			fastdom.mutate(function () {
+				if (markup.hasOwnProperty(pos)) {
+					var mark = markup[pos];
+					mark.style.height = value + 'px';
+				} else {
+					element.style['padding' + capitalize(pos)] = value + 'px';
+				}
+			});
 		};
 
 		var self = {
@@ -615,10 +638,10 @@
 				context: '<vscrollPortY'
 			},
 			link: vscrollPortLinkFactory(
-					'vscrollPortY',
-					function (newValue, oldValue) {
-						return !oldValue || newValue.top !== oldValue.top;
-					})
+				'vscrollPortY',
+				function (newValue, oldValue) {
+					return !oldValue || newValue.top !== oldValue.top;
+				})
 		};
 	}
 
@@ -684,10 +707,10 @@
 				context: '<vscrollPortX'
 			},
 			link: vscrollPortLinkFactory(
-					'vscrollPortX',
-					function (newValue, oldValue) {
-						return !oldValue || newValue.left !== oldValue.left;
-					}
+				'vscrollPortX',
+				function (newValue, oldValue) {
+					return !oldValue || newValue.left !== oldValue.left;
+				}
 			)
 		};
 	}
@@ -761,4 +784,4 @@
 		};
 	}
 })
-(angular);
+	(angular);
