@@ -3,6 +3,9 @@
 
 <head>
 	<script src="../bower_components/angular/angular.js"></script>
+	<script src="../node_modules/fastdom/fastdom.js"></script>
+	<script src="../node_modules/fastdom/fastdom-strict.js"></script>
+	<script src="../bower_components/angular/angular.js"></script>
 	<script src="../vscroll.js"></script>
 	<style>
 		html,
@@ -104,8 +107,8 @@
 
 		$scope.data = [];
 		$scope.rowContext = vscroll({
-			placeholderHeight: size,
-			placeholderWidth: size,
+			// placeholderHeight: size,
+			// placeholderWidth: size,
 			rowHeight: function () {
 				return size;
 			},

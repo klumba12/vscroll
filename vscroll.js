@@ -20,7 +20,7 @@
 	var isUndef = angular.isUndefined;
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
-	var requestAnimationFrame =
+	var rAF =
 			window.requestAnimationFrame ||
 			window.mozRequestAnimationFrame ||
 			window.webkitRequestAnimationFrame ||
@@ -444,7 +444,7 @@
 							position = e;
 							if (container.count && !ticking) {
 								ticking = true;
-								requestAnimationFrame(tick);
+								rAF(tick);
 							}
 						}
 					});
