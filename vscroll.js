@@ -29,7 +29,7 @@
 			f();
 		};
 	} else {
-		rAf = window.requestAnimationFrame ||
+		rAF = window.requestAnimationFrame ||
 			window.mozRequestAnimationFrame ||
 			window.webkitRequestAnimationFrame ||
 			window.msRequestAnimationFrame;
@@ -194,14 +194,15 @@
 				invalidate(offsets, position.index, count);
 				position = getPosition(offsets, view);
 
-				var offset = position.value - position.offset;
-				if (offset >= 0) {
+				var offset = position.offset;
+				var delta = position.value - offset;
+				if (delta >= 0) {
 					var size = itemSize();
 					max = size
 						? Math.max(0, size * (count - self.context.settings.threshold))
-						: viewSize(view) < position.lastOffset ? Math.max(max, position.offset) : max;
+						: viewSize(view) < position.lastOffset ? Math.max(max, offset) : max;
 
-					var frame1 = Math.max(0, position.offset);
+					var frame1 = Math.max(0, offset);
 					var frame2 = Math.max(0, max - frame1);
 
 					move(frame1, frame2);
@@ -485,7 +486,6 @@
 					}
 
 					port.reset();
-
 					switch (type) {
 						case 'vscrollPortX':
 							view.resetX();
@@ -587,18 +587,19 @@
 
 		var self = {
 			getPosition: function (offsets, view) {
+				var value = view.top;
 				var size = self.itemSize();
 				if (size) {
-					var index = Math.round(view.top / size);
+					var index = Math.round(value / size);
 					return {
-						value: view.top,
+						value: value,
 						index: index,
-						offset: view.top,
+						offset: value,
 						lastOffset: 0
 					};
 				}
 
-				return getPosition(offsets, view.top);
+				return getPosition(offsets, value);
 			},
 			move: function (top, bottom) {
 				move('top', top);
@@ -657,18 +658,19 @@
 
 		var self = {
 			getPosition: function (offsets, view) {
+				var value = view.left;
 				var size = self.itemSize();
 				if (size) {
-					var index = Math.round(view.left / size);
+					var index = Math.round(value / size);
 					return {
-						value: view.left,
+						value: value,
 						index: index,
 						offset: size * index,
 						lastOffset: 0
 					};
 				}
 
-				return getPosition(offsets, view.left);
+				return getPosition(offsets, value);
 			}, move: function (left, right) {
 				move('left', left);
 				move('right', right);
@@ -783,5 +785,4 @@
 			}
 		};
 	}
-})
-	(angular);
+})(angular);
