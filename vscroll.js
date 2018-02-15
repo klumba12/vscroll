@@ -21,14 +21,9 @@
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
 
-	var rAF;
-	var fastdom;
-	if (window.fastdom) {
-		fastdom = window.fastdom;
-		rAF = function (f) {
-			f();
-		};
-	} else {
+	var rAF = function (f) { f(); };
+	var fastdom = window.fastdom;
+	if (!fastdom) {
 		rAF = window.requestAnimationFrame ||
 			window.mozRequestAnimationFrame ||
 			window.webkitRequestAnimationFrame ||
@@ -106,7 +101,17 @@
 		};
 	};
 
-	var getPosition = function (offsets, value) {
+	var findPosition = function (offsets, value, itemSize) {
+		if (itemSize) {
+			var index = Math.round(value / itemSize);
+			return {
+				value: value,
+				index: index,
+				offset: itemSize * index,
+				lastOffset: 0
+			};
+		}
+
 		var index = findIndexAt(offsets, value);
 		var length = offsets.length;
 		if (index > 0) {
@@ -589,17 +594,9 @@
 			getPosition: function (offsets, view) {
 				var value = view.top;
 				var size = self.itemSize();
-				if (size) {
-					var index = Math.round(value / size);
-					return {
-						value: value,
-						index: index,
-						offset: value,
-						lastOffset: 0
-					};
-				}
+				var position = findPosition(offsets, value, size);
 
-				return getPosition(offsets, value);
+				return position;
 			},
 			move: function (top, bottom) {
 				move('top', top);
@@ -660,18 +657,11 @@
 			getPosition: function (offsets, view) {
 				var value = view.left;
 				var size = self.itemSize();
-				if (size) {
-					var index = Math.round(value / size);
-					return {
-						value: value,
-						index: index,
-						offset: size * index,
-						lastOffset: 0
-					};
-				}
-
-				return getPosition(offsets, value);
-			}, move: function (left, right) {
+				var position = findPosition(offsets, value, size);
+		
+				return position;
+			},
+			move: function (left, right) {
 				move('left', left);
 				move('right', right);
 			},
