@@ -101,6 +101,10 @@
 		};
 	};
 
+	var getBench = function (offsets, viewSize) {
+		return 80;
+	};
+
 	var findPosition = function (offsets, value, itemSize) {
 		if (itemSize) {
 			var index = Math.round(value / itemSize);
@@ -188,24 +192,26 @@
 			var invalidate = layout.invalidateFactory(items);
 			var move = layout.move;
 			var getPosition = layout.getPosition;
-			var itemSize = layout.itemSize;
-			var viewSize = layout.viewSize;
+			var getItemSize = layout.itemSize;
+			var getViewSize = layout.viewSize;
 
 			var empty = function () {
 				return 0;
 			};
 
-			this.update = function (count, view) {
+			this.recycle = function (count, box) {
 				invalidate(offsets, position.index, count);
-				position = getPosition(offsets, view);
+				position = getPosition(offsets, box);
 
-				var offset = position.offset;
+				var viewSize = getViewSize(box)
+				var bench = getBench(offsets, viewSize);
+				var offset = position.offset - bench;
 				var delta = position.value - offset;
 				if (delta >= 0) {
-					var size = itemSize();
-					max = size
-						? Math.max(0, size * (count - self.context.settings.threshold))
-						: viewSize(view) < position.lastOffset ? Math.max(max, offset) : max;
+					var itemSize = getItemSize();
+					max = itemSize
+						? Math.max(0, itemSize * (count - self.context.settings.threshold))
+						: viewSize < position.lastOffset - bench ? Math.max(max, offset) : max;
 
 					var frame1 = Math.max(0, offset);
 					var frame2 = Math.max(0, max - frame1);
@@ -218,7 +224,7 @@
 
 			this.invalidate = function (count, view) {
 				max = 0;
-				return self.update(count, view);
+				return self.recycle(count, view);
 			};
 
 			this.reset = function () {
@@ -439,7 +445,7 @@
 			element.style.outline = 'none';
 			element.style.overflowAnchor = 'none';
 
-			var position = { top: 0, left: 0, height: 0, width: 0 };
+			var box = { top: 0, left: 0, height: 0, width: 0 };
 			var container = context.container;
 			var settings = context.settings;
 
@@ -448,7 +454,7 @@
 			};
 
 			var invalidate = function () {
-				container.cursor = port.update(container.count, position);
+				container.cursor = port.recycle(container.count, box);
 			};
 
 			var ticking = false;
@@ -465,8 +471,8 @@
 
 			var scrollOff = view.scrollEvent.on(
 				function (e) {
-					if (canApply(e, position)) {
-						position = e;
+					if (canApply(e, box)) {
+						box = e;
 						if (container.count && !ticking) {
 							ticking = true;
 							rAF(tick);
@@ -506,7 +512,7 @@
 			var updateOff = container.updateEvent.on(
 				function (e) {
 					if (e.force) {
-						container.cursor = port.invalidate(container.count, position);
+						container.cursor = port.invalidate(container.count, box);
 					}
 				});
 
@@ -591,12 +597,10 @@
 		};
 
 		var self = {
-			getPosition: function (offsets, view) {
-				var value = view.top;
+			getPosition: function (offsets, box) {
+				var value = box.top;
 				var size = self.itemSize();
-				var position = findPosition(offsets, value, size);
-
-				return position;
+				return findPosition(offsets, value, size);
 			},
 			move: function (top, bottom) {
 				move('top', top);
@@ -654,12 +658,10 @@
 		};
 
 		var self = {
-			getPosition: function (offsets, view) {
-				var value = view.left;
+			getPosition: function (offsets, box) {
+				var value = box.left;
 				var size = self.itemSize();
-				var position = findPosition(offsets, value, size);
-		
-				return position;
+				return findPosition(offsets, value, size);
 			},
 			move: function (left, right) {
 				move('left', left);
@@ -669,8 +671,8 @@
 				var columnWidth = context().settings.columnWidth;
 				return isNumber(columnWidth) ? columnWidth : 0;
 			},
-			viewSize: function (view) {
-				return view.width;
+			viewSize: function (box) {
+				return box.width;
 			},
 			invalidateFactory: function (items) {
 				var invalidate = invalidateFactory(items);

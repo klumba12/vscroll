@@ -14,7 +14,7 @@
 	<button ng-click="update()">update</button>
 	<button ng-mousedown="up()" ng-mouseup="release()">&uparrow;</button>
 	<button ng-mousedown="down()" ng-mouseup="release()">&downarrow;</button>
-	<div id="vscroll-list" vscroll style="height:500px; width: 200px; overflow-y: auto;margin:16px;">
+	<div id="vscroll-list" vscroll style="height: 50vh; width: 200px; overflow-y: auto;margin:16px;">
 		<ul vscroll-port-y="vscrollContext" style="list-style: none;margin:0;">
 			<li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index"
 				 style="height: 20px;">
@@ -42,7 +42,7 @@
 	var app = angular.module('app', ['vscroll']);
 	app.controller('vscrollTest', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
 		$scope.data = [];
-		for (var i = 0; i < 200; i++) {
+		for (var i = 0; i < 100; i++) {
 			$scope.data[i] = {id: i, name: 'name ' + i};
 		}
 
