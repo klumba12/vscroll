@@ -101,10 +101,6 @@
 		};
 	};
 
-	var getBench = function (offsets, viewSize) {
-		return 80;
-	};
-
 	var findPosition = function (offsets, value, itemSize) {
 		if (itemSize) {
 			var index = Math.round(value / itemSize);
@@ -179,7 +175,7 @@
 			var element = $element[0];
 			var self = this;
 			var items = [];
-			var max = 0;
+			var maxOffset = 0;
 			var offsets = [];
 			var position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
 			var layout = layoutFactory(
@@ -193,28 +189,46 @@
 			var move = layout.move;
 			var getPosition = layout.getPosition;
 			var getItemSize = layout.itemSize;
-			var getViewSize = layout.viewSize;
+			var getScrollSize = layout.scrollSize;
+			var getPortSize = layout.portSize;
 
 			var empty = function () {
 				return 0;
 			};
 
+			var qq = function (offsets, index, count) {
+
+			}
+
 			this.recycle = function (count, box) {
 				invalidate(offsets, position.index, count);
 				position = getPosition(offsets, box);
 
-				var viewSize = getViewSize(box)
-				var bench = getBench(offsets, viewSize);
-				var offset = position.offset - bench;
+				var portSize = getPortSize(box);
+				var scrollSize = getScrollSize(box);
+
+				var bench = (scrollSize - portSize) / 2;
+				var offset = position.offset;
+
 				var delta = position.value - offset;
 				if (delta >= 0) {
 					var itemSize = getItemSize();
-					max = itemSize
+					maxOffset = itemSize
 						? Math.max(0, itemSize * (count - self.context.settings.threshold))
-						: viewSize < position.lastOffset - bench ? Math.max(max, offset) : max;
+						: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
 
 					var frame1 = Math.max(0, offset);
-					var frame2 = Math.max(0, max - frame1);
+					var frame2 = Math.max(0, maxOffset - frame1);
+
+					console.log('------------------');
+					console.log('scrollSize: ' + scrollSize);
+					console.log('portSize: ' + portSize);
+					console.log('bench: ' + bench);
+					console.log('offset: ' + offset);
+					console.log('lastOffset: ' + position.lastOffset);
+					console.log('max: ' + maxOffset);
+					console.log('frame1: ' + frame1);
+					console.log('frame2: ' + frame2);
 
 					move(frame1, frame2);
 				}
@@ -223,15 +237,14 @@
 			};
 
 			this.invalidate = function (count, view) {
-				max = 0;
+				maxOffset = 0;
 				return self.recycle(count, view);
 			};
 
 			this.reset = function () {
-				max = 0;
-				//items = [];
+				maxOffset = 0;
 				offsets = [];
-				position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
+				position = findPosition([], 0, 0);
 				move(0, 0);
 			};
 
@@ -445,7 +458,15 @@
 			element.style.outline = 'none';
 			element.style.overflowAnchor = 'none';
 
-			var box = { top: 0, left: 0, height: 0, width: 0 };
+			var box = {
+				scrollWidth: 0,
+				scrollHeight: 0,
+				scrollTop: 0,
+				scrollLeft: 0,
+				portWidth: 0,
+				portHeight: 0
+			};
+
 			var container = context.container;
 			var settings = context.settings;
 
@@ -453,13 +474,13 @@
 				$scope.$evalAsync(f);
 			};
 
-			var invalidate = function () {
+			var recycle = function () {
 				container.cursor = port.recycle(container.count, box);
 			};
 
 			var ticking = false;
 			var tick = function () {
-				container.apply(invalidate, emit);
+				container.apply(recycle, emit);
 				ticking = false;
 			};
 
@@ -555,10 +576,12 @@
 		var onScroll = function () {
 			fastdom.measure(function () {
 				scrollEvent.emit({
-					width: content.scrollWidth,
-					height: content.scrollHeight,
-					top: content.scrollTop,
-					left: content.scrollLeft
+					scrollWidth: content.scrollWidth,
+					scrollHeight: content.scrollHeight,
+					scrollTop: content.scrollTop,
+					scrollLeft: content.scrollLeft,
+					portWidth: content.clientWidth,
+					portHeight: content.clientHeight
 				});
 			});
 		};
@@ -598,7 +621,7 @@
 
 		var self = {
 			getPosition: function (offsets, box) {
-				var value = box.top;
+				var value = box.scrollTop;
 				var size = self.itemSize();
 				return findPosition(offsets, value, size);
 			},
@@ -610,8 +633,11 @@
 				var rowHeight = context().settings.rowHeight;
 				return isNumber(rowHeight) ? rowHeight : 0;
 			},
-			viewSize: function (view) {
-				return view.height;
+			scrollSize: function (box) {
+				return box.scrollHeight;
+			},
+			portSize: function (box) {
+				return box.portHeight;
 			},
 			invalidateFactory: function (items) {
 				var invalidate = invalidateFactory(items);
@@ -642,7 +668,7 @@
 			link: vscrollPortLinkFactory(
 				'vscrollPortY',
 				function (newValue, oldValue) {
-					return !oldValue || newValue.top !== oldValue.top;
+					return !oldValue || newValue.scrollTop !== oldValue.scrollTop;
 				})
 		};
 	}
@@ -659,7 +685,7 @@
 
 		var self = {
 			getPosition: function (offsets, box) {
-				var value = box.left;
+				var value = box.scrollLeft;
 				var size = self.itemSize();
 				return findPosition(offsets, value, size);
 			},
@@ -671,8 +697,11 @@
 				var columnWidth = context().settings.columnWidth;
 				return isNumber(columnWidth) ? columnWidth : 0;
 			},
-			viewSize: function (box) {
-				return box.width;
+			scrollSize: function (box) {
+				return box.scrollWidth;
+			},
+			portSize: function (box) {
+				return box.portWidth;
 			},
 			invalidateFactory: function (items) {
 				var invalidate = invalidateFactory(items);
@@ -703,7 +732,7 @@
 			link: vscrollPortLinkFactory(
 				'vscrollPortX',
 				function (newValue, oldValue) {
-					return !oldValue || newValue.left !== oldValue.left;
+					return !oldValue || newValue.scrollLeft !== oldValue.scrollLeft;
 				}
 			)
 		};
