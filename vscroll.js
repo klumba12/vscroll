@@ -81,8 +81,9 @@
 		return min;
 	};
 
-	var invalidateFactory = function (items) {
-		return function (offsets, index, count) {
+	var recycleFactory = function (items) {
+		var offsets = [];
+		return function (index, count) {
 			var threshold = items.length;
 			var cursor = offsets.length;
 			var diff = Math.min(count, threshold + index) - cursor;
@@ -98,6 +99,8 @@
 
 				cursor++;
 			}
+
+			return offsets;
 		};
 	};
 
@@ -176,7 +179,6 @@
 			var self = this;
 			var items = [];
 			var maxOffset = 0;
-			var offsets = [];
 			var position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
 			var layout = layoutFactory(
 				element,
@@ -185,7 +187,7 @@
 					return self.context
 				});
 
-			var invalidate = layout.invalidateFactory(items);
+			var recycle = layout.recycleFactory(items);
 			var move = layout.move;
 			var getPosition = layout.getPosition;
 			var getItemSize = layout.itemSize;
@@ -196,54 +198,61 @@
 				return 0;
 			};
 
-			var qq = function (offsets, index, count) {
-
-			}
-
-			this.recycle = function (count, box) {
-				invalidate(offsets, position.index, count);
+			this.invalidate = function (count, box) {
+				var offsets = recycle(position.index, count);
 				position = getPosition(offsets, box);
 
-				var portSize = getPortSize(box);
-				var scrollSize = getScrollSize(box);
+				var threshold = self.context.settings.threshold;
+				if (count - position.index >= threshold) {
+					var portSize = getPortSize(box);
+					var scrollSize = getScrollSize(box);
 
-				var bench = (scrollSize - portSize) / 2;
-				var offset = position.offset;
+					var bench = (scrollSize - portSize) / 2;
+					var offset = position.offset;
 
-				var delta = position.value - offset;
-				if (delta >= 0) {
-					var itemSize = getItemSize();
-					maxOffset = itemSize
-						? Math.max(0, itemSize * (count - self.context.settings.threshold))
-						: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
+					var delta = position.value - offset;
+					if (delta >= 0) {
+						var itemSize = getItemSize();
+						maxOffset = itemSize
+							? Math.max(0, itemSize * (count - threshold))
+							: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
 
-					var frame1 = Math.max(0, offset);
-					var frame2 = Math.max(0, maxOffset - frame1);
+						var frame1 = Math.max(0, offset);
+						var frame2 = Math.max(0, maxOffset - frame1);
 
-					console.log('------------------');
-					console.log('scrollSize: ' + scrollSize);
-					console.log('portSize: ' + portSize);
-					console.log('bench: ' + bench);
-					console.log('offset: ' + offset);
-					console.log('lastOffset: ' + position.lastOffset);
-					console.log('max: ' + maxOffset);
-					console.log('frame1: ' + frame1);
-					console.log('frame2: ' + frame2);
+						console.log('------------------');
+						console.log('scrollSize: ' + scrollSize);
+						console.log('portSize: ' + portSize);
+						console.log('bench: ' + bench);
+						console.log('offset: ' + offset);
+						console.log('lastOffset: ' + position.lastOffset);
+						console.log('max: ' + maxOffset);
+						console.log('frame1: ' + frame1);
+						console.log('frame2: ' + frame2);
+						console.log('viewSize: ' + (scrollSize - (frame1 + frame2)));
 
-					move(frame1, frame2);
+						if (scrollSize - (frame1 + frame2) !== 600) {
+							debugger;
+						}
+
+						move(frame1, frame2);
+					}
+				}
+				else {
+					move(maxOffset, 0);
 				}
 
 				return position.index;
 			};
 
-			this.invalidate = function (count, view) {
+			this.refresh = function (count, box) {
 				maxOffset = 0;
-				return self.recycle(count, view);
+				return self.invalidate(count, box);
 			};
 
 			this.reset = function () {
 				maxOffset = 0;
-				offsets = [];
+				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
 				move(0, 0);
 			};
@@ -405,24 +414,19 @@
 				throw new Error('vscroll filter context is not set');
 			}
 
-			var settings = context.settings;
-			var container = context.container;
-			var view = container.items;
-			var position = container.position;
-			var cursor = container.cursor;
-			var threshold = settings.threshold;
 			var count = data.length;
+			var container = context.container;
 
 			container.update(count);
-
 			if (count) {
-				if (container.force ||
-					(cursor <= count && cursor !== position)) {
-
-					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor);
+				var settings = context.settings;
+				var cursor = container.cursor;
+				var threshold = settings.threshold;
+				var view = container.items;
+				var first = Math.min(Math.max(0, count - threshold), cursor);
+				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
-
-					container.position = cursor;
+					container.position = first;
 					container.drawEvent.emit({
 						first: first,
 						last: last,
@@ -474,13 +478,13 @@
 				$scope.$evalAsync(f);
 			};
 
-			var recycle = function () {
-				container.cursor = port.recycle(container.count, box);
+			var invalidate = function () {
+				container.cursor = port.invalidate(container.count, box);
 			};
 
 			var ticking = false;
 			var tick = function () {
-				container.apply(recycle, emit);
+				container.apply(invalidate, emit);
 				ticking = false;
 			};
 
@@ -533,7 +537,7 @@
 			var updateOff = container.updateEvent.on(
 				function (e) {
 					if (e.force) {
-						container.cursor = port.invalidate(container.count, box);
+						container.cursor = port.refresh(container.count, box);
 					}
 				});
 
@@ -639,15 +643,15 @@
 			portSize: function (box) {
 				return box.portHeight;
 			},
-			invalidateFactory: function (items) {
-				var invalidate = invalidateFactory(items);
-				return function (offsets, index, count) {
+			recycleFactory: function (items) {
+				var recycle = recycleFactory(items);
+				return function (index, count) {
 					var size = self.itemSize();
 					if (size) {
-						return;
+						return [];
 					}
 
-					return invalidate(offsets, index, count);
+					return recycle(index, count);
 				};
 			}
 		};
@@ -703,15 +707,15 @@
 			portSize: function (box) {
 				return box.portWidth;
 			},
-			invalidateFactory: function (items) {
-				var invalidate = invalidateFactory(items);
-				return function (offsets, index, count) {
+			recycleFactory: function (items) {
+				var recycle = recycleFactory(items);
+				return function (index, count) {
 					var size = self.itemSize();
 					if (size) {
-						return;
+						return [];
 					}
 
-					return invalidate(offsets, index, count);
+					return recycle(index, count);
 				};
 			}
 		};
