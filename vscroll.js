@@ -190,11 +190,14 @@
 
 				var threshold = self.context.settings.threshold;
 				if (count - position.index >= threshold) {
+					var last = Math.min(offsets.length, position.index + threshold) - 1;
+					var first = last - threshold;
+					var viewSize = (offsets[last] || 0) - (offsets[first] || 0);
 					var portSize = getPortSize(box);
 					var scrollSize = getScrollSize(box);
-
-					var bench = (scrollSize - portSize) / 2;
-					var offset = position.offset;
+	
+					var bench = (viewSize - portSize) / 2;
+					var offset = position.offset - bench;
 
 					var delta = position.value - offset;
 					if (delta >= 0) {
@@ -216,6 +219,7 @@
 						console.log('frame1: ' + frame1);
 						console.log('frame2: ' + frame2);
 						console.log('viewSize: ' + (scrollSize - (frame1 + frame2)));
+						console.log('viewSize2: ' + viewSize);
 
 						move(frame1, frame2);
 					}
