@@ -21,24 +21,10 @@
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
 
-	var rAF = function (f) { f(); };
-	var fastdom = window.fastdom;
-	if (!fastdom) {
-		rAF = window.requestAnimationFrame ||
-			window.mozRequestAnimationFrame ||
-			window.webkitRequestAnimationFrame ||
-			window.msRequestAnimationFrame;
-
-		fastdom = {
-			mutate: function (f) {
-				f();
-			},
-			measure: function (f) {
-				f();
-			}
-		};
-	}
-
+	var rAF = window.requestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.msRequestAnimationFrame;
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -231,10 +217,6 @@
 						console.log('frame2: ' + frame2);
 						console.log('viewSize: ' + (scrollSize - (frame1 + frame2)));
 
-						if (scrollSize - (frame1 + frame2) !== 600) {
-							debugger;
-						}
-
 						move(frame1, frame2);
 					}
 				}
@@ -295,6 +277,18 @@
 				resetEvent: new Event(),
 				updateEvent: new Event(),
 				drawEvent: new Event(),
+
+				tick(f) {
+					rAF(f);
+				},
+
+				read(f) {
+					f();
+				},
+
+				write(f) {
+					f();
+				},
 
 				apply: function (f, emit) {
 					emit(f);
@@ -419,10 +413,10 @@
 
 			container.update(count);
 			if (count) {
-				var settings = context.settings;
-				var cursor = container.cursor;
-				var threshold = settings.threshold;
 				var view = container.items;
+				var cursor = container.cursor;
+				var settings = context.settings;
+				var threshold = settings.threshold;
 				var first = Math.min(Math.max(0, count - threshold), cursor);
 				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
@@ -496,13 +490,25 @@
 
 			var scrollOff = view.scrollEvent.on(
 				function (e) {
-					if (canApply(e, box)) {
-						box = e;
-						if (container.count && !ticking) {
-							ticking = true;
-							rAF(tick);
+					var element = e.element;
+					container.read(function () {
+						var newBox = {
+							scrollWidth: element.scrollWidth,
+							scrollHeight: element.scrollHeight,
+							scrollTop: element.scrollTop,
+							scrollLeft: element.scrollLeft,
+							portWidth: element.clientWidth,
+							portHeight: element.clientHeight
+						};
+
+						if (canApply(newBox, box)) {
+							box = newBox;
+							if (container.count && !ticking) {
+								ticking = true;
+								container.tick(tick);
+							}
 						}
-					}
+					});
 				});
 
 			var viewResetOff = view.resetEvent.on(
@@ -553,7 +559,7 @@
 	}
 
 	function vscrollCtrl($scope, $element, $window) {
-		var content = $element[0];
+		var box = $element[0];
 		var window = $window;
 		var scrollEvent = new Event();
 		var resetEvent = new Event();
@@ -562,32 +568,23 @@
 		this.resetEvent = resetEvent;
 
 		this.drawPlaceholder = function (width, height) {
-			var style = content.style;
-			var placeholder = placeholderBitmap(width || content.clientWidth, height || content.clientHeight);
+			var style = box.style;
+			var placeholder = placeholderBitmap(width || box.clientWidth, height || box.clientHeight);
 
 			style.backgroundImage = 'url(' + placeholder + ')';
 			style.backgroundRepeat = 'repeat';
 		};
 
 		this.resetX = function () {
-			content.scrollLeft = 0;
+			box.scrollLeft = 0;
 		};
 
 		this.resetY = function () {
-			content.scrollTop = 0;
+			box.scrollTop = 0;
 		};
 
 		var onScroll = function () {
-			fastdom.measure(function () {
-				scrollEvent.emit({
-					scrollWidth: content.scrollWidth,
-					scrollHeight: content.scrollHeight,
-					scrollTop: content.scrollTop,
-					scrollLeft: content.scrollLeft,
-					portWidth: content.clientWidth,
-					portHeight: content.clientHeight
-				});
-			});
+			scrollEvent.emit({ element: box });
 		};
 
 		var onResize = function () {
@@ -595,11 +592,11 @@
 			resetEvent.emit(e);
 		};
 
-		content.addEventListener('scroll', onScroll, { passive: true });
+		box.addEventListener('scroll', onScroll, { passive: true });
 		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
-			content.removeEventListener('scroll', onScroll);
+			box.removeEventListener('scroll', onScroll);
 			window.removeEventListener('resize', onResize);
 		});
 	}
@@ -613,7 +610,8 @@
 
 	function yLayoutFactory(element, markup, context) {
 		var move = function (pos, value) {
-			fastdom.mutate(function () {
+			var container = context().container;
+			container.write(function () {
 				if (markup.hasOwnProperty(pos)) {
 					var mark = markup[pos];
 					mark.style.height = value + 'px';
