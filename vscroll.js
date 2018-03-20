@@ -94,7 +94,6 @@
 		if (itemSize) {
 			var index = Math.round(value / itemSize);
 			return {
-				value: value,
 				index: index,
 				offset: itemSize * index,
 				lastOffset: 0
@@ -105,7 +104,6 @@
 		var length = offsets.length;
 		if (index > 0) {
 			return {
-				value: value,
 				index: index,
 				offset: offsets[index - 1],
 				lastOffset: offsets[length - 1]
@@ -113,7 +111,6 @@
 		}
 
 		return {
-			value: value,
 			index: 0,
 			offset: 0,
 			lastOffset: length ? offsets[length - 1] : 0
@@ -165,6 +162,7 @@
 			var self = this;
 			var items = [];
 			var maxOffset = 0;
+			var minArm = Number.MAX_SAFE_INTEGER;
 			var position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
 			var layout = layoutFactory(
 				element,
@@ -184,44 +182,60 @@
 				return 0;
 			};
 
-			this.invalidate = function (count, box) {
-				var offsets = recycle(position.index, count);
-				position = getPosition(offsets, box);
+			var getArm = function (offsets, box) {
+				if (!offsets.length) {
+					return 0;
+				}
 
 				var threshold = self.context.settings.threshold;
-				if (count - position.index >= threshold) {
-					var last = Math.min(offsets.length, position.index + threshold) - 1;
-					var first = last - threshold;
-					var viewSize = (offsets[last] || 0) - (offsets[first] || 0);
-					var portSize = getPortSize(box);
-					var scrollSize = getScrollSize(box);
-	
-					var bench = (viewSize - portSize) / 2;
-					var offset = position.offset - bench;
+				var portSize = getPortSize(box);
+				var last = Math.min(offsets.length, position.index + threshold) - 1;
+				var first = (last + 1) - threshold;
+				var viewSize = offsets[last] - offsets[first];
+				var arm = (viewSize - portSize) / 2;
+				return arm;
+			};
 
-					var delta = position.value - offset;
-					if (delta >= 0) {
+			this.invalidate = function (count, box) {
+				var offsets = recycle(position.index, count);
+				if (!offsets.length) {
+					return position.index;
+				}
+
+				var arm = getArm(offsets, box);
+				minArm = Math.min(minArm, arm);
+
+				var threshold = self.context.settings.threshold;
+				var oldIndex = position.index;
+				position = getPosition(offsets, box, minArm);
+				var newIndex = position.index;
+				if (count - newIndex >= threshold) {
+					if (newIndex !== oldIndex) {
+						var scrollSize = getScrollSize(box);
+						var offset = position.offset;
 						var itemSize = getItemSize();
 						maxOffset = itemSize
 							? Math.max(0, itemSize * (count - threshold))
 							: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
 
-						var frame1 = Math.max(0, offset);
-						var frame2 = Math.max(0, maxOffset - frame1);
+						var pad1 = Math.max(0, offset);
+						var pad2 = Math.max(0, maxOffset - pad1);
 
 						console.log('------------------');
+						console.log('box: ' + JSON.stringify(box));
 						console.log('scrollSize: ' + scrollSize);
-						console.log('portSize: ' + portSize);
-						console.log('bench: ' + bench);
+						console.log('arm: ' + arm);
+						console.log('minArm: ' + minArm);
 						console.log('offset: ' + offset);
 						console.log('lastOffset: ' + position.lastOffset);
-						console.log('max: ' + maxOffset);
-						console.log('frame1: ' + frame1);
-						console.log('frame2: ' + frame2);
-						console.log('viewSize: ' + (scrollSize - (frame1 + frame2)));
-						console.log('viewSize2: ' + viewSize);
+						console.log('maxOffset: ' + maxOffset);
+						console.log('pad1: ' + pad1);
+						console.log('pad2: ' + pad2);
+						console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
+						console.log('oldIndex: ' + oldIndex);
+						console.log('newIndex: ' + newIndex);
 
-						move(frame1, frame2);
+						move(pad1, pad2);
 					}
 				}
 				else {
@@ -233,11 +247,13 @@
 
 			this.refresh = function (count, box) {
 				maxOffset = 0;
+				minArm = Number.MAX_SAFE_INTEGER;
 				return self.invalidate(count, box);
 			};
 
 			this.reset = function () {
 				maxOffset = 0;
+				minArm = Number.MAX_SAFE_INTEGER;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
 				move(0, 0);
@@ -626,8 +642,8 @@
 		};
 
 		var self = {
-			getPosition: function (offsets, box) {
-				var value = box.scrollTop;
+			getPosition: function (offsets, box, arm) {
+				var value = Math.max(0, box.scrollTop - arm);
 				var size = self.itemSize();
 				return findPosition(offsets, value, size);
 			},
@@ -690,8 +706,8 @@
 		};
 
 		var self = {
-			getPosition: function (offsets, box) {
-				var value = box.scrollLeft;
+			getPosition: function (offsets, box, arm) {
+				var value = Math.max(0, box.scrollLeft - arm);
 				var size = self.itemSize();
 				return findPosition(offsets, value, size);
 			},

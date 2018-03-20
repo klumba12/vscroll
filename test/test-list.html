@@ -64,14 +64,14 @@
 			var element = document.getElementById('vscroll-list');
 			promise = $interval(function () {
 				element.scrollTop = element.scrollTop + 1;
-			}, 100);
+			}, 50);
 		};
 
 		$scope.up = function () {
 			var element = document.getElementById('vscroll-list');
 			promise = $interval(function () {
 				element.scrollTop = element.scrollTop - 1;
-			}, 100);
+			}, 50);
 		};
 
 		$scope.release = function () {
