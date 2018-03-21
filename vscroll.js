@@ -26,7 +26,7 @@
 		window.webkitRequestAnimationFrame ||
 		window.msRequestAnimationFrame;
 
-	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
+	var UNSET_ARM = 0; //Number.MAX_SAFE_INTEGER;
 	var UNSET_OFFSET = 0;
 
 	function capitalize(text) {
@@ -99,7 +99,8 @@
 			return {
 				index: index,
 				offset: itemSize * index,
-				lastOffset: 0
+				lastOffset: 0,
+				value: value
 			};
 		}
 
@@ -109,14 +110,16 @@
 			return {
 				index: index,
 				offset: offsets[index - 1],
-				lastOffset: offsets[length - 1]
+				lastOffset: offsets[length - 1],
+				value: value
 			};
 		}
 
 		return {
 			index: 0,
 			offset: 0,
-			lastOffset: length ? offsets[length - 1] : 0
+			lastOffset: length ? offsets[length - 1] : 0,
+			value: value
 		};
 	};
 
@@ -185,7 +188,7 @@
 				return 0;
 			};
 
-			var getArm = function (offsets, box) {
+			var getArm = function (offsets, box, index) {
 				var itemSize = getItemSize();
 				if (itemSize) {
 					var threshold = self.context.settings.threshold;
@@ -197,7 +200,7 @@
 				if (offsets.length) {
 					var threshold = self.context.settings.threshold;
 					var portSize = getPortSize(box);
-					var last = Math.min(offsets.length, position.index + threshold) - 1;
+					var last = Math.min(offsets.length, index + threshold) - 1;
 					var first = (last + 1) - threshold;
 					var viewSize = offsets[last] - offsets[first];
 					return Math.max(0, (viewSize - portSize) / 2);
@@ -208,64 +211,59 @@
 
 			this.updateEvent = new Event();
 
-			this.invalidate = function (count, box, force) {
-				force = force || minArm === UNSET_ARM;
+			this.recycle = function (count, box, force) {
 				var offsets = recycle(position.index, count);
-				var arm = getArm(offsets, box);
+				var threshold = self.context.settings.threshold;
+
+				var arm = getArm(offsets, box, position.index);
 				minArm = Math.min(minArm, arm);
 
-				var threshold = self.context.settings.threshold;
 				var oldIndex = position.index;
-				position = getPosition(offsets, box, minArm);
-				var newIndex = position.index;
-				console.log('box: ' + JSON.stringify(box));
-				console.log('arm: ' + arm);
-				console.log('minArm: ' + minArm);
-				console.log('offset: ' + position.offset);
-				console.log('lastOffset: ' + position.lastOffset);
-				console.log('oldIndex: ' + oldIndex);
-				console.log('newIndex: ' + newIndex);
-				console.log('offsets length: ' + offsets.length);
-				if (count - newIndex >= threshold) {
-					if (newIndex !== oldIndex || force) {
-						var scrollSize = getScrollSize(box);
-						var offset = position.offset;
-						var itemSize = getItemSize();
-						maxOffset = itemSize
-							? Math.max(0, itemSize * (count - threshold))
-							: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
-
-						var pad1 = Math.max(0, offset);
-						var pad2 = Math.max(0, maxOffset - pad1);
-
-						console.log('scrollSize: ' + scrollSize);
-						console.log('maxOffset: ' + maxOffset);
-						console.log('pad1: ' + pad1);
-						console.log('pad2: ' + pad2);
-						console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
-
-						move(pad1, pad2);
-					}
-				}
-				else {
-					move(maxOffset, 0);
+				var newPosition = getPosition(offsets, box, minArm);
+				var newIndex = newPosition.index;
+				if (position.index !== newPosition.index) {
+					position = newPosition;
+					return newPosition;
 				}
 
+				return null;
+			};
+
+			this.invalidate = function (position, box) {
+				var offset = position.offset;
+				var threshold = self.context.settings.threshold;
+				var scrollSize = getScrollSize(box);
+				var itemSize = getItemSize();
+				maxOffset = itemSize
+					? Math.max(0, itemSize * (count - threshold))
+					: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
+
+				var pad1 = Math.max(0, offset);
+				var pad2 = Math.max(0, maxOffset - pad1);
+
+				console.log('!!!move');
+				console.log('scrollSize: ' + scrollSize);
+				console.log('maxOffset: ' + maxOffset);
+				console.log('pad1: ' + pad1);
+				console.log('pad2: ' + pad2);
+				console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
+
+				move(pad1, pad2);
 				return position.index;
 			};
 
-			this.refresh = function (count, box) {
+			this.refresh = function (box) {
 				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
-				return self.invalidate(count, box, true);
+				return self.invalidate(position, box);
 			};
 
-			this.reset = function () {
+			this.reset = function (box) {
 				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				move(0, 0);
+				return self.invalidate(position, box);
 			};
 
 			this.setItem = function (index, element) {
@@ -497,15 +495,15 @@
 				$scope.$evalAsync(f);
 			};
 
-			var invalidate = function () {
-				container.cursor = port.invalidate(container.count, box, force);
-				force = false;
-			};
-
 			var ticking = false;
 			var tick = function () {
 				console.log('!!!tick');
-				container.apply(invalidate, emit);
+				var position = port.recycle(container.count, box);
+				if (position) {
+					container.apply(function () {
+						container.cursor = port.invalidate(position, box);
+					}, emit);
+				}
 				ticking = false;
 			};
 
@@ -522,7 +520,7 @@
 					};
 
 					console.log('!!!update');
-					if (canApply(newBox, box)) {
+					if (force || canApply(newBox, box)) {
 						box = newBox;
 						if (container.count && !ticking) {
 							ticking = true;
@@ -560,7 +558,7 @@
 						return;
 					}
 
-					port.reset();
+					port.reset(box);
 					switch (type) {
 						case 'vscrollPortX':
 							view.resetX();
@@ -575,23 +573,23 @@
 
 			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
-					console.log('------------------');
-					console.log('!!!container update event');
-					if (e.force) {
-						container.cursor = port.refresh(container.count, box);
-					}
-					else {
-						force = true;
-						update();
-					}
+					// console.log('------------------');
+					// console.log('!!!container update event');
+					// if (e.force) {
+					// 	container.cursor = port.refresh(box);
+					// }
+					// else {
+					// 	force = true;
+					// 	update();
+					// }
 				});
 
 			var portUpdateOff = port.updateEvent.on(
 				function () {
-					console.log('------------------');
-					console.log('!!!port update event');
-					force = true;
-					update();
+					// console.log('------------------');
+					// console.log('!!!port update event');
+					// force = true;
+					// update();
 				}
 			);
 

@@ -15,6 +15,7 @@
 	<div vscroll-port-x="vscrollContext" style="height: 100px;">
 		<div vscroll-column="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index"
 			  style="display: inline-block; height: 100%;background-color: #{{item.code}}; width: {{item.width}}px;">
+			  {{item.id}}
 		</div>
 	</div>
 </div>
@@ -40,7 +41,7 @@
 
 		var first = true;
 		$scope.vscrollContext = vscroll({
-			threshold: 32,
+			threshold: 10,
 			fetch: function (skip, take, d) {
 				console.log('update requested: skip ' + skip);
 				console.log('update requested: take ' + take);
@@ -49,7 +50,8 @@
 					for (var i = skip; i < skip + take; i++) {
 						var code = Math.floor(Math.random() * 16777215);
 						$scope.data[i] = {
-							width: 1 + Math.round(Math.random() * 100),
+							id: i,
+							width: 50, // 1 + Math.round(Math.random() * 100),
 							code: code.toString(16)
 						};
 					}
