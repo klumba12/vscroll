@@ -209,6 +209,13 @@
 				var oldIndex = position.index;
 				position = getPosition(offsets, box, minArm);
 				var newIndex = position.index;
+				console.log('box: ' + JSON.stringify(box));
+				console.log('arm: ' + arm);
+				console.log('minArm: ' + minArm);
+				console.log('offset: ' + position.offset);
+				console.log('lastOffset: ' + position.lastOffset);
+				console.log('oldIndex: ' + oldIndex);
+				console.log('newIndex: ' + newIndex);
 				if (count - newIndex >= threshold) {
 					if (newIndex !== oldIndex) {
 						var scrollSize = getScrollSize(box);
@@ -221,19 +228,11 @@
 						var pad1 = Math.max(0, offset);
 						var pad2 = Math.max(0, maxOffset - pad1);
 
-						console.log('------------------');
-						console.log('box: ' + JSON.stringify(box));
 						console.log('scrollSize: ' + scrollSize);
-						console.log('arm: ' + arm);
-						console.log('minArm: ' + minArm);
-						console.log('offset: ' + offset);
-						console.log('lastOffset: ' + position.lastOffset);
 						console.log('maxOffset: ' + maxOffset);
 						console.log('pad1: ' + pad1);
 						console.log('pad2: ' + pad2);
 						console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
-						console.log('oldIndex: ' + oldIndex);
-						console.log('newIndex: ' + newIndex);
 
 						move(pad1, pad2);
 					}
@@ -326,6 +325,7 @@
 					self.count = count;
 					if (total !== self.total || prevCount !== count) {
 						self.total = total;
+						console.log('!!!update event from not eq count');
 						self.updateEvent.emit({
 							force: isUndef(force)
 								? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
@@ -343,6 +343,7 @@
 									self.total = count;
 									self.force = true;
 
+									console.log('!!!update event from deferred');
 									self.updateEvent.emit({
 										force: isUndef(force)
 											? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
@@ -453,6 +454,7 @@
 					}
 
 					container.force = false;
+					console.log('!!!filter invoked');
 				}
 
 				return view;
@@ -498,8 +500,33 @@
 
 			var ticking = false;
 			var tick = function () {
+				console.log('!!!tick');
 				container.apply(invalidate, emit);
 				ticking = false;
+			};
+
+			var update = function () {
+				console.log('------------------');
+				console.log('!!!update');
+				container.read(function () {
+					var element = view.element;
+					var newBox = {
+						scrollWidth: element.scrollWidth,
+						scrollHeight: element.scrollHeight,
+						scrollTop: element.scrollTop,
+						scrollLeft: element.scrollLeft,
+						portWidth: element.clientWidth,
+						portHeight: element.clientHeight
+					};
+
+					if (canApply(newBox, box)) {
+						box = newBox;
+						if (container.count && !ticking) {
+							ticking = true;
+							container.tick(tick);
+						}
+					}
+				});
 			};
 
 			if (settings.placeholderHeight > 0 || this.placeholderWidth > 0) {
@@ -508,28 +535,7 @@
 				view.drawPlaceholder(width, height);
 			}
 
-			var scrollOff = view.scrollEvent.on(
-				function (e) {
-					var element = e.element;
-					container.read(function () {
-						var newBox = {
-							scrollWidth: element.scrollWidth,
-							scrollHeight: element.scrollHeight,
-							scrollTop: element.scrollTop,
-							scrollLeft: element.scrollLeft,
-							portWidth: element.clientWidth,
-							portHeight: element.clientHeight
-						};
-
-						if (canApply(newBox, box)) {
-							box = newBox;
-							if (container.count && !ticking) {
-								ticking = true;
-								container.tick(tick);
-							}
-						}
-					});
-				});
+			var scrollOff = view.scrollEvent.on(update);
 
 			var viewResetOff = view.resetEvent.on(
 				function (e) {
@@ -562,8 +568,12 @@
 
 			var updateOff = container.updateEvent.on(
 				function (e) {
+					console.log('!!!update event');
 					if (e.force) {
 						container.cursor = port.refresh(container.count, box);
+					}
+					else {
+						update();
 					}
 				});
 
@@ -586,6 +596,7 @@
 
 		this.scrollEvent = scrollEvent;
 		this.resetEvent = resetEvent;
+		this.element = box;
 
 		this.drawPlaceholder = function (width, height) {
 			var style = box.style;
@@ -604,7 +615,7 @@
 		};
 
 		var onScroll = function () {
-			scrollEvent.emit({ element: box });
+			scrollEvent.emit();
 		};
 
 		var onResize = function () {
