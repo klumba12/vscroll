@@ -183,25 +183,28 @@
 			};
 
 			var getArm = function (offsets, box) {
-				if (!offsets.length) {
-					return 0;
+				var itemSize = getItemSize();
+				if (itemSize) {
+					var threshold = self.context.settings.threshold;
+					var portSize = getPortSize(box);
+					var viewSize = threshold * itemSize;
+					return Math.max(0, (viewSize - portSize) / 2);										
 				}
 
-				var threshold = self.context.settings.threshold;
-				var portSize = getPortSize(box);
-				var last = Math.min(offsets.length, position.index + threshold) - 1;
-				var first = (last + 1) - threshold;
-				var viewSize = offsets[last] - offsets[first];
-				var arm = (viewSize - portSize) / 2;
-				return arm;
+				if (offsets.length) {
+					var threshold = self.context.settings.threshold;
+					var portSize = getPortSize(box);
+					var last = Math.min(offsets.length, position.index + threshold) - 1;
+					var first = (last + 1) - threshold;
+					var viewSize = offsets[last] - offsets[first];
+					return Math.max(0, (viewSize - portSize) / 2);
+				}
+
+				return 0;
 			};
 
 			this.invalidate = function (count, box) {
 				var offsets = recycle(position.index, count);
-				if (!offsets.length) {
-					return position.index;
-				}
-
 				var arm = getArm(offsets, box);
 				minArm = Math.min(minArm, arm);
 
