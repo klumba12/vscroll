@@ -26,6 +26,9 @@
 		window.webkitRequestAnimationFrame ||
 		window.msRequestAnimationFrame;
 
+	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
+	var UNSET_OFFSET = 0;
+
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
 	}
@@ -161,9 +164,9 @@
 			var element = $element[0];
 			var self = this;
 			var items = [];
-			var maxOffset = 0;
-			var minArm = Number.MAX_SAFE_INTEGER;
-			var position = { index: 0, offset: 0, value: 0, lastOffset: 0 };
+			var maxOffset = UNSET_OFFSET;
+			var minArm = UNSET_ARM;
+			var position = findPosition([], 0, 0);
 			var layout = layoutFactory(
 				element,
 				this.markup,
@@ -188,7 +191,7 @@
 					var threshold = self.context.settings.threshold;
 					var portSize = getPortSize(box);
 					var viewSize = threshold * itemSize;
-					return Math.max(0, (viewSize - portSize) / 2);										
+					return Math.max(0, (viewSize - portSize) / 2);
 				}
 
 				if (offsets.length) {
@@ -200,10 +203,13 @@
 					return Math.max(0, (viewSize - portSize) / 2);
 				}
 
-				return 0;
+				return UNSET_ARM;
 			};
 
-			this.invalidate = function (count, box) {
+			this.updateEvent = new Event();
+
+			this.invalidate = function (count, box, force) {
+				force = force || minArm === UNSET_ARM;
 				var offsets = recycle(position.index, count);
 				var arm = getArm(offsets, box);
 				minArm = Math.min(minArm, arm);
@@ -219,8 +225,9 @@
 				console.log('lastOffset: ' + position.lastOffset);
 				console.log('oldIndex: ' + oldIndex);
 				console.log('newIndex: ' + newIndex);
+				console.log('offsets length: ' + offsets.length);
 				if (count - newIndex >= threshold) {
-					if (newIndex !== oldIndex) {
+					if (newIndex !== oldIndex || force) {
 						var scrollSize = getScrollSize(box);
 						var offset = position.offset;
 						var itemSize = getItemSize();
@@ -248,14 +255,14 @@
 			};
 
 			this.refresh = function (count, box) {
-				maxOffset = 0;
-				minArm = Number.MAX_SAFE_INTEGER;
-				return self.invalidate(count, box);
+				maxOffset = UNSET_OFFSET;
+				minArm = UNSET_ARM;
+				return self.invalidate(count, box, true);
 			};
 
 			this.reset = function () {
-				maxOffset = 0;
-				minArm = Number.MAX_SAFE_INTEGER;
+				maxOffset = UNSET_OFFSET;
+				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
 				move(0, 0);
@@ -263,25 +270,26 @@
 
 			this.setItem = function (index, element) {
 				items[index] = element;
+				self.updateEvent.emit({ action: 'set', index: index });
 			};
 
 			this.removeItem = function (index) {
+				var last = items.length - 1;
 				if (index === 0) {
 					items.shift();
-					return;
 				}
-
-				var length = items.length - 1;
-				if (index === length) {
+				else if (index === last) {
 					items.pop();
-					while (length-- && items[length] === empty) {
+					while (last-- && items[last] === empty) {
 						items.pop();
 					}
-					return;
+				}
+				else {
+					// TODO: think how to avoid this
+					items[index] = empty;
 				}
 
-				// TODO: think how to avoid this
-				items[index] = empty;
+				self.updateEvent.emit({ action: 'remove', index: index`` });
 			};
 		};
 	}
@@ -323,18 +331,9 @@
 					var prevPage = self.page;
 					var page = Math.ceil((cursor + threshold) / threshold) - 1;
 					var prevCount = self.count;
-					var total = Math.max(self.total, count);
 
+					self.total = Math.max(self.total, count);
 					self.count = count;
-					if (total !== self.total || prevCount !== count) {
-						self.total = total;
-						console.log('!!!update event from not eq count');
-						self.updateEvent.emit({
-							force: isUndef(force)
-								? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
-								: force
-						});
-					}
 
 					if (force || page > prevPage) {
 						self.page = page;
@@ -457,7 +456,7 @@
 					}
 
 					container.force = false;
-					console.log('!!!filter invoked');
+					console.log('!!!filter invoked: ' + first + '-' + last);
 				}
 
 				return view;
@@ -476,6 +475,7 @@
 				throw new Error('vscroll context is not setup for ' + type);
 			}
 
+			var force = false;
 			var element = $element[0];
 			element.tabIndex = 0;
 			element.style.outline = 'none';
@@ -498,7 +498,8 @@
 			};
 
 			var invalidate = function () {
-				container.cursor = port.invalidate(container.count, box);
+				container.cursor = port.invalidate(container.count, box, force);
+				force = false;
 			};
 
 			var ticking = false;
@@ -509,8 +510,6 @@
 			};
 
 			var update = function () {
-				console.log('------------------');
-				console.log('!!!update');
 				container.read(function () {
 					var element = view.element;
 					var newBox = {
@@ -522,6 +521,7 @@
 						portHeight: element.clientHeight
 					};
 
+					console.log('!!!update');
 					if (canApply(newBox, box)) {
 						box = newBox;
 						if (container.count && !ticking) {
@@ -538,7 +538,11 @@
 				view.drawPlaceholder(width, height);
 			}
 
-			var scrollOff = view.scrollEvent.on(update);
+			var scrollOff = view.scrollEvent.on(function () {
+				console.log('------------------');
+				console.log('!!!scroll update');
+				update();
+			});
 
 			var viewResetOff = view.resetEvent.on(
 				function (e) {
@@ -569,22 +573,34 @@
 					}
 				});
 
-			var updateOff = container.updateEvent.on(
+			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
-					console.log('!!!update event');
+					console.log('------------------');
+					console.log('!!!container update event');
 					if (e.force) {
 						container.cursor = port.refresh(container.count, box);
 					}
 					else {
+						force = true;
 						update();
 					}
 				});
+
+			var portUpdateOff = port.updateEvent.on(
+				function () {
+					console.log('------------------');
+					console.log('!!!port update event');
+					force = true;
+					update();
+				}
+			);
 
 			$scope.$on('$destroy', function () {
 				delete port.markup;
 
 				scrollOff();
-				updateOff();
+				containerUpdateOff();
+				portUpdateOff();
 				containerResetOff();
 				viewResetOff();
 			});
@@ -704,7 +720,7 @@
 			link: vscrollPortLinkFactory(
 				'vscrollPortY',
 				function (newValue, oldValue) {
-					return !oldValue || newValue.scrollTop !== oldValue.scrollTop;
+					return !oldValue.portHeight || newValue.scrollTop !== oldValue.scrollTop;
 				})
 		};
 	}
@@ -768,7 +784,7 @@
 			link: vscrollPortLinkFactory(
 				'vscrollPortX',
 				function (newValue, oldValue) {
-					return !oldValue || newValue.scrollLeft !== oldValue.scrollLeft;
+					return !oldValue.portWidth || newValue.scrollLeft !== oldValue.scrollLeft;
 				}
 			)
 		};
