@@ -25,11 +25,16 @@
 </head>
 
 <body ng-controller="vscrollTable">
-	<div vscroll style="height: 90%; width: 90%; overflow: auto;">
-		<table vscroll-port-x="columnContext" vscroll-port-y="rowContext">
-			<tr vscroll-row="{{::$index}}" ng-repeat="row in data | vscroll: rowContext track by $index">
-				<td vscroll-column="{{::$index}}" ng-repeat="color in row | vscroll: columnContext track by $index">
-					<div ng-style="{'background-color': bg($parent.$index, $index)}" style="width: 10px; height: 10px; ">
+	<div vscroll
+	     style="height: 90%; width: 90%; overflow: auto;">
+		<table vscroll-port-x="columnContext"
+		       vscroll-port-y="rowContext">
+			<tr vscroll-row="{{::$index}}"
+			    ng-repeat="row in data | vscroll: rowContext track by $index">
+				<td vscroll-column="{{::$index}}"
+				    ng-repeat="color in row | vscroll: columnContext track by $index">
+					<div ng-style="{'background-color': bg($parent.$index, $index)}"
+					     style="width: 10px; height: 10px; ">
 					</div>
 				</td>
 			</tr>

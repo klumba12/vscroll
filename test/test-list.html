@@ -1,41 +1,72 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="app">
+<html lang="en"
+      ng-app="app">
+
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="X-UA-Compatible"
+	      content="IE=edge,chrome=1">
 	<title>vscroll test</title>
 	<script src="../bower_components/angular/angular.js"></script>
 	<script src="../vscroll.js"></script>
 </head>
+
 <body ng-controller="vscrollTest">
-<h2>vscroll test for {{data.length}} items</h2>
-<div>
-	<button ng-click="reset()">reset</button>
-	<button ng-click="update()">update</button>
-	<button ng-mousedown="up()" ng-mouseup="release()">&uparrow;</button>
-	<button ng-mousedown="down()" ng-mouseup="release()">&downarrow;</button>
-	<div id="vscroll-list" vscroll style="height: 50vh; width: 200px; overflow-y: auto;margin:16px;">
-		<ul vscroll-port-y="vscrollContext" style="list-style: none;margin:0;">
-			<li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index"
-				 style="height: 20px;">
-				{{$index}}: {{item.id}}
+	<h2>vscroll test for {{data.length}} items</h2>
+	<div>
+		<button ng-click="reset()">reset</button>
+		<button ng-click="update()">update</button>
+		<button ng-mousedown="up()"
+		        ng-mouseup="release()">&uparrow;</button>
+		<button ng-mousedown="down()"
+		        ng-mouseup="release()">&downarrow;</button>
+		<div id="vscroll-list"
+		     vscroll
+		     style="height: 50vh; width: 200px; overflow-y: auto;margin:16px;">
+			<ul vscroll-port-y="vscrollContext"
+			    style="list-style: none;margin:0;">
+				<li vscroll-row="{{::$index}}"
+				    ng-repeat="item in data | vscroll: vscrollContext track by $index"
+				    style="height: 20px;">
+					{{$index}}: {{item.id}}
+				</li>
+			</ul>
+		</div>
+		<ul style="list-style: none">
+			<li>
+				<b>settings.threshold:</b> {{settings.threshold}}
+			</li>
+			<li>
+				<b>container.count:</b> {{container.count}}
+			</li>
+			<li>
+				<b>container.position:</b> {{container.position}}
+			</li>
+			<li>
+				<b>container.cursor:</b>{{container.cursor}}
+			</li>
+			<li>
+				<b>container.page:</b> {{container.page}}
+			</li>
+			<li>
+				<b>container.force:</b> {{container.force}}
+			</li>
+			<li>
+				<b>container.items.length:</b> {{container.items.length}}
+			</li>
+			<li>
+				<b>container.items[first]:</b> {{container.items[0]}}
+			</li>
+			<li>
+				<b>container.items[last]:</b> {{container.items[container.items.length - 1]}}
+			</li>
+			<li>
+				<b>container.items:</b> {{container.items}}
 			</li>
 		</ul>
 	</div>
-	<ul style="list-style: none">
-		<li><b>settings.threshold:</b> {{settings.threshold}}</li>
-		<li><b>container.count:</b> {{container.count}}</li>
-		<li><b>container.position:</b> {{container.position}}</li>
-		<li><b>container.cursor:</b>{{container.cursor}}</li>
-		<li><b>container.page:</b> {{container.page}}</li>
-		<li><b>container.force:</b> {{container.force}}</li>
-		<li><b>container.items.length:</b> {{container.items.length}}</li>
-		<li><b>container.items[first]:</b> {{container.items[0]}}</li>
-		<li><b>container.items[last]:</b> {{container.items[container.items.length - 1]}}</li>
-		<li><b>container.items:</b> {{container.items}}</li>
-	</ul>
-</div>
 </body>
+
 </html>
 
 <script language="javascript">
@@ -43,10 +74,10 @@
 	app.controller('vscrollTest', ['$scope', 'vscroll', '$interval', function ($scope, vscroll, $interval) {
 		$scope.data = [];
 		for (var i = 0; i < 100; i++) {
-			$scope.data[i] = {id: i, name: 'name ' + i};
+			$scope.data[i] = { id: i, name: 'name ' + i };
 		}
 
-		$scope.vscrollContext = vscroll({threshold: 30});
+		$scope.vscrollContext = vscroll({ threshold: 30 });
 
 		$scope.settings = $scope.vscrollContext.settings;
 		$scope.container = $scope.vscrollContext.container;

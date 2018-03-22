@@ -19,7 +19,7 @@ describe('test view', function () {
 	});
 
 	it('should return empty collection if totalCount = 0', function () {
-		var context = service({totalCount: 0});
+		var context = service({ totalCount: 0 });
 		expect(view([1, 2, 3], context).length).toEqual(0);
 	});
 });

@@ -3,7 +3,8 @@
 
 <head>
 	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta http-equiv="X-UA-Compatible"
+	      content="IE=edge,chrome=1">
 	<title>vscroll test</title>
 	<script src="../bower_components/angular/angular.js"></script>
 	<script src="../vscroll.js"></script>
@@ -11,46 +12,49 @@
 
 <body ng-controller="vscrollList">
 
-<div vscroll style="height:300px; width: 100%; overflow-y: auto;">
-	<ul vscroll-port-y="vscrollContext" style="list-style: none;margin:0;padding:0;">
-		<li vscroll-mark="top"></li>
-		<li vscroll-row="{{::$index}}" ng-repeat="item in data | vscroll: vscrollContext track by $index"
-			 style="color: #{{item.color}}; width: 100%; height: {{item.height}}px; background-color: #{{item.code}}">
-			{{item.height}}px: #{{item.code}}
-		</li>
-		<li vscroll-mark="bottom"></li>
-	</ul>
-</div>
+	<div vscroll
+	     style="height:300px; width: 100%; overflow-y: auto;">
+		<ul vscroll-port-y="vscrollContext"
+		    style="list-style: none;margin:0;padding:0;">
+			<li vscroll-mark="top"></li>
+			<li vscroll-row="{{::$index}}"
+			    ng-repeat="item in data | vscroll: vscrollContext track by $index"
+			    style="color: #{{item.color}}; width: 100%; height: {{item.height}}px; background-color: #{{item.code}}">
+				{{item.height}}px: #{{item.code}}
+			</li>
+			<li vscroll-mark="bottom"></li>
+		</ul>
+	</div>
 
-<script language="javascript">
-	var app = angular.module('app', ['vscroll']);
-	app.controller('vscrollList', ['$scope', 'vscroll', function ($scope, vscroll) {
-		$scope.data = [];
+	<script language="javascript">
+		var app = angular.module('app', ['vscroll']);
+		app.controller('vscrollList', ['$scope', 'vscroll', function ($scope, vscroll) {
+			$scope.data = [];
 
-		var isLight = function (hexcolor) {
-			var r = (hexcolor >> 16) & 0xFF;
-			var g = (hexcolor >> 8) & 0xFF;
-			var b = hexcolor & 0xFF;
+			var isLight = function (hexcolor) {
+				var r = (hexcolor >> 16) & 0xFF;
+				var g = (hexcolor >> 8) & 0xFF;
+				var b = hexcolor & 0xFF;
 
-			var a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-			return (a < 0.5);
-		};
-
-		for (var i = 0; i < 200; i++) {
-			var code = Math.floor(Math.random() * 16777215);
-			$scope.data[i] = {
-				height: 20 + Math.round(Math.random() * 100),
-				code: code.toString(16),
-				color: isLight(code) ? '000' : 'fff'
+				var a = 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+				return (a < 0.5);
 			};
-		}
 
-		$scope.vscrollContext = vscroll({
-			threshold: 30
-		});
+			for (var i = 0; i < 200; i++) {
+				var code = Math.floor(Math.random() * 16777215);
+				$scope.data[i] = {
+					height: 20 + Math.round(Math.random() * 100),
+					code: code.toString(16),
+					color: isLight(code) ? '000' : 'fff'
+				};
+			}
 
-	}]);
-</script>
+			$scope.vscrollContext = vscroll({
+				threshold: 30
+			});
+
+		}]);
+	</script>
 </body>
 
 </html>
