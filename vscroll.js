@@ -270,7 +270,7 @@
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				//return self.invalidate(count, box, position);
+				return position.index;
 			};
 
 			this.setItem = function (index, element) {
@@ -394,6 +394,7 @@
 
 					var e = { handled: false, source: 'container' };
 					this.resetEvent.emit(e);
+					this.update(this.count, true);
 				}
 			};
 
