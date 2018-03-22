@@ -26,7 +26,7 @@
 		window.webkitRequestAnimationFrame ||
 		window.msRequestAnimationFrame;
 
-	var UNSET_ARM = 0; //Number.MAX_SAFE_INTEGER;
+	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
 	var UNSET_OFFSET = 0;
 
 	function capitalize(text) {
@@ -221,7 +221,17 @@
 				var oldIndex = position.index;
 				var newPosition = getPosition(offsets, box, minArm);
 				var newIndex = newPosition.index;
-				if (position.index !== newPosition.index) {
+
+				if (force || position.index !== newPosition.index) {
+					console.log('box: ' + JSON.stringify(box));
+					console.log('arm: ' + arm);
+					console.log('minArm: ' + minArm);
+					console.log('offset: ' + position.offset);
+					console.log('lastOffset: ' + position.lastOffset);
+					console.log('oldIndex: ' + position.index);
+					console.log('newIndex: ' + newPosition.index);
+					console.log('offsets length: ' + offsets.length);
+
 					position = newPosition;
 					return newPosition;
 				}
@@ -229,7 +239,7 @@
 				return null;
 			};
 
-			this.invalidate = function (position, box) {
+			this.invalidate = function (count, box, position) {
 				var offset = position.offset;
 				var threshold = self.context.settings.threshold;
 				var scrollSize = getScrollSize(box);
@@ -252,18 +262,18 @@
 				return position.index;
 			};
 
-			this.refresh = function (box) {
+			this.refresh = function (count, box) {
 				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
-				return self.invalidate(position, box);
+				return self.invalidate(count, box, position);
 			};
 
-			this.reset = function (box) {
+			this.reset = function (count, box) {
 				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				return self.invalidate(position, box);
+				return self.invalidate(count, box, position);
 			};
 
 			this.setItem = function (index, element) {
@@ -287,7 +297,7 @@
 					items[index] = empty;
 				}
 
-				self.updateEvent.emit({ action: 'remove', index: index`` });
+				self.updateEvent.emit({ action: 'remove', index: index });
 			};
 		};
 	}
@@ -438,7 +448,7 @@
 				var cursor = container.cursor;
 				var settings = context.settings;
 				var threshold = settings.threshold;
-				var first = Math.min(Math.max(0, count - threshold), cursor);
+				var first = cursor; // Math.min(Math.max(0, count - threshold), cursor);
 				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
 					container.position = first;
@@ -473,7 +483,6 @@
 				throw new Error('vscroll context is not setup for ' + type);
 			}
 
-			var force = false;
 			var element = $element[0];
 			element.tabIndex = 0;
 			element.style.outline = 'none';
@@ -491,23 +500,30 @@
 			var container = context.container;
 			var settings = context.settings;
 
+			$scope.$watch(function () {
+				console.log('###DIGEST###');
+			})
+
 			var emit = function (f) {
+				console.log('###EVAL_ASYNC###');
 				$scope.$evalAsync(f);
 			};
 
 			var ticking = false;
-			var tick = function () {
-				console.log('!!!tick');
-				var position = port.recycle(container.count, box);
+			var tick = function (force) {
+				ticking = false;
+
+				console.log('!!!tick!!!');
+				var count = container.count;
+				var position = port.recycle(count, box, force);
 				if (position) {
 					container.apply(function () {
-						container.cursor = port.invalidate(position, box);
+						container.cursor = port.invalidate(count, box, position);
 					}, emit);
 				}
-				ticking = false;
 			};
 
-			var update = function () {
+			var update = function (force) {
 				container.read(function () {
 					var element = view.element;
 					var newBox = {
@@ -520,11 +536,13 @@
 					};
 
 					console.log('!!!update');
-					if (force || canApply(newBox, box)) {
+					if (canApply(newBox, box)) {
 						box = newBox;
 						if (container.count && !ticking) {
 							ticking = true;
-							container.tick(tick);
+							container.tick(function () {
+								tick(force);
+							});
 						}
 					}
 				});
@@ -539,7 +557,7 @@
 			var scrollOff = view.scrollEvent.on(function () {
 				console.log('------------------');
 				console.log('!!!scroll update');
-				update();
+				update(false);
 			});
 
 			var viewResetOff = view.resetEvent.on(
@@ -558,7 +576,7 @@
 						return;
 					}
 
-					port.reset(box);
+					port.reset(container.count, box);
 					switch (type) {
 						case 'vscrollPortX':
 							view.resetX();
@@ -573,23 +591,18 @@
 
 			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
-					// console.log('------------------');
-					// console.log('!!!container update event');
-					// if (e.force) {
-					// 	container.cursor = port.refresh(box);
-					// }
-					// else {
-					// 	force = true;
-					// 	update();
-					// }
+					if (e.force) {
+						console.log('------------------');
+						console.log('!!!container update event');
+						container.cursor = port.refresh(container.count, box);
+					}
 				});
 
 			var portUpdateOff = port.updateEvent.on(
 				function () {
-					// console.log('------------------');
-					// console.log('!!!port update event');
-					// force = true;
-					// update();
+					console.log('------------------');
+					console.log('!!!port update event');
+					update(true);
 				}
 			);
 

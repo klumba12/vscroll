@@ -41,7 +41,7 @@
 
 		var first = true;
 		$scope.vscrollContext = vscroll({
-			threshold: 10,
+			threshold: 30,
 			fetch: function (skip, take, d) {
 				console.log('update requested: skip ' + skip);
 				console.log('update requested: take ' + take);
@@ -51,7 +51,7 @@
 						var code = Math.floor(Math.random() * 16777215);
 						$scope.data[i] = {
 							id: i,
-							width: 50, // 1 + Math.round(Math.random() * 100),
+							width: 1 + Math.round(Math.random() * 100),
 							code: code.toString(16)
 						};
 					}
