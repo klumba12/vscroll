@@ -7,24 +7,27 @@
 	vscrollPortXDirective.$inject = [];
 
 	angular.module('vscroll', [])
-			.service('vscroll', vscrollService)
-			.filter('vscroll', vscrollFilter)
-			.directive('vscroll', vscrollDirective)
-			.directive('vscrollPortY', vscrollPortYDirective)
-			.directive('vscrollPortX', vscrollPortXDirective)
-			.directive('vscrollRow', vscrollRowDirective)
-			.directive('vscrollColumn', vscrollColumnDirective)
-			.directive('vscrollMark', vscrollMarkDirective);
+		.service('vscroll', vscrollService)
+		.filter('vscroll', vscrollFilter)
+		.directive('vscroll', vscrollDirective)
+		.directive('vscrollPortY', vscrollPortYDirective)
+		.directive('vscrollPortX', vscrollPortXDirective)
+		.directive('vscrollRow', vscrollRowDirective)
+		.directive('vscrollColumn', vscrollColumnDirective)
+		.directive('vscrollMark', vscrollMarkDirective);
 
 	var extend = Object.assign || angular.extend;
 	var isUndef = angular.isUndefined;
 	var isNumber = angular.isNumber;
 	var isFunction = angular.isFunction;
-	var requestAnimationFrame =
-			window.requestAnimationFrame ||
-			window.mozRequestAnimationFrame ||
-			window.webkitRequestAnimationFrame ||
-			window.msRequestAnimationFrame;
+
+	var rAF = window.requestAnimationFrame ||
+		window.mozRequestAnimationFrame ||
+		window.webkitRequestAnimationFrame ||
+		window.msRequestAnimationFrame;
+
+	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
+	var UNSET_OFFSET = 0;
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -67,8 +70,9 @@
 		return min;
 	};
 
-	var invalidateFactory = function (items) {
-		return function (offsets, index, count) {
+	var recycleFactory = function (items) {
+		var offsets = [];
+		return function (index, count) {
 			var threshold = items.length;
 			var cursor = offsets.length;
 			var diff = Math.min(count, threshold + index) - cursor;
@@ -84,26 +88,38 @@
 
 				cursor++;
 			}
+
+			return offsets;
 		};
 	};
 
-	var getPosition = function (offsets, value) {
+	var findPosition = function (offsets, value, itemSize) {
+		if (itemSize) {
+			var index = Math.round(value / itemSize);
+			return {
+				index: index,
+				offset: itemSize * index,
+				lastOffset: 0,
+				value: value
+			};
+		}
+
 		var index = findIndexAt(offsets, value);
 		var length = offsets.length;
 		if (index > 0) {
 			return {
-				value: value,
 				index: index,
 				offset: offsets[index - 1],
-				lastOffset: offsets[length - 1]
+				lastOffset: offsets[length - 1],
+				value: value
 			};
 		}
 
 		return {
-			value: value,
 			index: 0,
 			offset: 0,
-			lastOffset: length ? offsets[length - 1] : 0
+			lastOffset: length ? offsets[length - 1] : 0,
+			value: value
 		};
 	};
 
@@ -151,80 +167,118 @@
 			var element = $element[0];
 			var self = this;
 			var items = [];
-			var max = 0;
-			var offsets = [];
-			var position = {index: 0, offset: 0, value: 0, lastOffset: 0};
+			var maxOffset = UNSET_OFFSET;
+			var minArm = UNSET_ARM;
+			var position = findPosition([], 0, 0);
 			var layout = layoutFactory(
-					element,
-					this.markup,
-					function () {
-						return self.context
-					});
+				element,
+				this.markup,
+				function () {
+					return self.context
+				});
 
-			var invalidate = layout.invalidateFactory(items);
+			var recycle = layout.recycleFactory(items);
 			var move = layout.move;
 			var getPosition = layout.getPosition;
-			var itemSize = layout.itemSize;
-			var viewSize = layout.viewSize;
+			var getItemSize = layout.itemSize;
+			var getScrollSize = layout.scrollSize;
+			var getPortSize = layout.portSize;
 
 			var empty = function () {
 				return 0;
 			};
 
-			this.update = function (count, view) {
-				invalidate(offsets, position.index, count);
-				position = getPosition(offsets, view);
-
-				var offset = position.value - position.offset;
-				if (offset >= 0) {
-					var size = itemSize();
-					max = size
-							? Math.max(0, size * (count - self.context.settings.threshold))
-							: viewSize(view) < position.lastOffset ? Math.max(max, position.offset) : max;
-
-					var frame1 = Math.max(0, position.offset);
-					var frame2 = Math.max(0, max - frame1);
-
-					move(frame1, frame2);
+			var getArm = function (offsets, box, index) {
+				var itemSize = getItemSize();
+				if (itemSize) {
+					var threshold = self.context.settings.threshold;
+					var portSize = getPortSize(box);
+					var viewSize = threshold * itemSize;
+					return Math.max(0, (viewSize - portSize) / 2);
 				}
 
+				if (offsets.length) {
+					var threshold = self.context.settings.threshold;
+					var portSize = getPortSize(box);
+					var last = Math.min(offsets.length, index + threshold) - 1;
+					var first = (last + 1) - threshold;
+					var viewSize = offsets[last] - offsets[first];
+					return Math.max(0, (viewSize - portSize) / 2);
+				}
+
+				return UNSET_ARM;
+			};
+
+			this.updateEvent = new Event();
+
+			this.recycle = function (count, box, force) {
+				var offsets = recycle(position.index, count);
+				var threshold = self.context.settings.threshold;
+
+				var arm = getArm(offsets, box, position.index);
+				minArm = Math.min(minArm, arm);
+
+				var newPosition = getPosition(offsets, box, minArm);
+				if (force || position.index !== newPosition.index) {
+					position = newPosition;
+					return newPosition;
+				}
+
+				return null;
+			};
+
+			this.invalidate = function (count, box, position) {
+				var offset = position.offset;
+				var threshold = self.context.settings.threshold;
+				var scrollSize = getScrollSize(box);
+				var itemSize = getItemSize();
+				maxOffset = itemSize
+					? Math.max(0, itemSize * (count - threshold))
+					: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
+
+				var pad1 = Math.max(0, offset);
+				var pad2 = Math.max(0, maxOffset - pad1);
+
+				move(pad1, pad2);
 				return position.index;
 			};
 
-			this.invalidate = function (count, view) {
-				max = 0;
-				return self.update(count, view);
+			this.refresh = function (count, box) {
+				maxOffset = UNSET_OFFSET;
+				minArm = UNSET_ARM;
+				return self.invalidate(count, box, position);
 			};
 
-			this.reset = function () {
-				max = 0;
-				//items = [];
-				offsets = [];
-				position = {index: 0, offset: 0, value: 0, lastOffset: 0};
-				move(0, 0);
+			this.reset = function (count, box) {
+				maxOffset = UNSET_OFFSET;
+				minArm = UNSET_ARM;
+				recycle = layout.recycleFactory(items);
+				position = findPosition([], 0, 0);
+				return self.invalidate(count, box, position);
 			};
 
 			this.setItem = function (index, element) {
 				items[index] = element;
+				self.updateEvent.emit({ action: 'set', index: index });
 			};
 
 			this.removeItem = function (index) {
+				var last = items.length - 1;
 				if (index === 0) {
 					items.shift();
-					return;
 				}
-
-				var length = items.length - 1;
-				if (index === length) {
+				else if (index === last) {
 					items.pop();
-					while (length-- && items[length] === empty) {
+					while (last-- && items[last] === empty) {
 						items.pop();
 					}
-					return;
+				}
+				else {
+					// TODO: think how to avoid this
+					items[index] = empty;
 				}
 
-				// TODO: think how to avoid this
-				items[index] = empty;
+				self.updateEvent.emit({ action: 'remove', index: index });
 			};
 		};
 	}
@@ -243,6 +297,18 @@
 				updateEvent: new Event(),
 				drawEvent: new Event(),
 
+				tick(f) {
+					rAF(f);
+				},
+
+				read(f) {
+					f();
+				},
+
+				write(f) {
+					f();
+				},
+
 				apply: function (f, emit) {
 					emit(f);
 				},
@@ -251,49 +317,47 @@
 					var self = this;
 					var threshold = settings.threshold;
 					var cursor = self.cursor;
-					var prevPage = self.page;
-					var page = Math.ceil((cursor + threshold) / threshold) - 1;
-					var prevCount = self.count;
-					var total = Math.max(self.total, count);
+					var oldPage = self.page;
+					var newPage = Math.ceil((cursor + threshold) / threshold) - 1;
 
-					self.count = count;
-					if (total !== self.total || prevCount !== count) {
-						self.total = total;
+					if (self.count !== count) {
+						self.count = count;
+						self.total = Math.max(self.total, count);
 						self.updateEvent.emit({
 							force: isUndef(force)
-									? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
-									: force
+								? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+								: force
 						});
 					}
 
-					if (force || page > prevPage) {
-						self.page = page;
+					if (force || newPage > oldPage) {
+						self.page = newPage;
 
 						var deferred = $q.defer();
 						deferred.promise
-								.then(function (count) {
-									if (count !== self.total) {
-										self.total = count;
-										self.force = true;
+							.then(function (count) {
+								if (count !== self.total) {
+									self.total = count;
+									self.force = true;
 
-										self.updateEvent.emit({
-											force: isUndef(force)
-													? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
-													: force
-										});
-									}
-								});
+									self.updateEvent.emit({
+										force: isUndef(force)
+											? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
+											: force
+									});
+								}
+							});
 
-						if (page === 0) {
+						if (newPage === 0) {
 							settings.fetch(0, threshold, deferred);
 						}
 						else {
-							var skip = (prevPage + 1) * threshold;
+							var skip = (oldPage + 1) * threshold;
 							if (self.total < skip) {
 								deferred.resolve(self.total);
 							}
 							else {
-								var take = (page - prevPage) * threshold;
+								var take = (newPage - oldPage) * threshold;
 								settings.fetch(skip, take, deferred);
 							}
 						}
@@ -303,6 +367,7 @@
 
 				reset: function () {
 					this.count = 0;
+					this.total = 0;
 					this.position = 0;
 					this.cursor = 0;
 					this.page = 0;
@@ -310,9 +375,9 @@
 
 					this.force = true;
 
-					var e = {handled: false, source: 'container'};
+					var e = { handled: false, source: 'container' };
 					this.resetEvent.emit(e);
-					this.update(0, true);
+					this.update(this.count, true);
 				}
 			};
 
@@ -361,24 +426,19 @@
 				throw new Error('vscroll filter context is not set');
 			}
 
-			var settings = context.settings;
-			var container = context.container;
-			var view = container.items;
-			var position = container.position;
-			var cursor = container.cursor;
-			var threshold = settings.threshold;
 			var count = data.length;
+			var container = context.container;
 
 			container.update(count);
-
 			if (count) {
-				if (container.force ||
-						(cursor <= count && cursor !== position)) {
-
-					var first = Math.max(cursor + Math.min(count - (cursor + threshold), 0), cursor);
+				var view = container.items;
+				var cursor = container.cursor;
+				var settings = context.settings;
+				var threshold = settings.threshold;
+				var first = cursor; // Math.min(Math.max(0, count - threshold), cursor);
+				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
-
-					container.position = cursor;
+					container.position = first;
 					container.drawEvent.emit({
 						first: first,
 						last: last,
@@ -414,7 +474,15 @@
 			element.style.outline = 'none';
 			element.style.overflowAnchor = 'none';
 
-			var position = {top: 0, left: 0, height: 0, width: 0};
+			var box = {
+				scrollWidth: 0,
+				scrollHeight: 0,
+				scrollTop: 0,
+				scrollLeft: 0,
+				portWidth: 0,
+				portHeight: 0
+			};
+
 			var container = context.container;
 			var settings = context.settings;
 
@@ -422,14 +490,41 @@
 				$scope.$evalAsync(f);
 			};
 
-			var invalidate = function () {
-				container.cursor = port.update(container.count, position);
+			var ticking = false;
+			var tick = function (force) {
+				ticking = false;
+
+				var count = container.count;
+				var position = port.recycle(count, box, force);
+				if (position) {
+					container.apply(function () {
+						container.cursor = port.invalidate(count, box, position);
+					}, emit);
+				}
 			};
 
-			var ticking = false;
-			var tick = function () {
-				container.apply(invalidate, emit);
-				ticking = false;
+			var update = function (force) {
+				container.read(function () {
+					var element = view.element;
+					var newBox = {
+						scrollWidth: element.scrollWidth,
+						scrollHeight: element.scrollHeight,
+						scrollTop: element.scrollTop,
+						scrollLeft: element.scrollLeft,
+						portWidth: element.clientWidth,
+						portHeight: element.clientHeight
+					};
+
+					if (canApply(newBox, box)) {
+						box = newBox;
+						if (container.count && !ticking) {
+							ticking = true;
+							container.tick(function () {
+								tick(force);
+							});
+						}
+					}
+				});
 			};
 
 			if (settings.placeholderHeight > 0 || this.placeholderWidth > 0) {
@@ -438,59 +533,58 @@
 				view.drawPlaceholder(width, height);
 			}
 
-			var scrollOff = view.scrollEvent.on(
-					function (e) {
-						if (canApply(e, position)) {
-							position = e;
-							if (container.count && !ticking) {
-								ticking = true;
-								requestAnimationFrame(tick);
-							}
-						}
-					});
+			var scrollOff = view.scrollEvent.on(function () {
+				update(false);
+			});
 
 			var viewResetOff = view.resetEvent.on(
-					function (e) {
-						if (e.handled) {
-							return;
-						}
+				function (e) {
+					if (e.handled) {
+						return;
+					}
 
-						e.handled = settings.resetTriggers.indexOf(e.source) < 0;
-						container.resetEvent.emit(e);
-					});
+					e.handled = settings.resetTriggers.indexOf(e.source) < 0;
+					container.resetEvent.emit(e);
+				});
 
 			var containerResetOff = container.resetEvent.on(
-					function (e) {
-						if (e.handled) {
-							return;
-						}
+				function (e) {
+					if (e.handled) {
+						return;
+					}
 
-						port.reset();
+					container.cursor = port.reset(container.count, box);
+					switch (type) {
+						case 'vscrollPortX':
+							view.resetX();
+							break;
+						case 'vscrollPortY':
+							view.resetY();
+							break;
+						default:
+							throw Error('vscroll unsupported port type ' + type);
+					}
+				});
 
-						switch (type) {
-							case 'vscrollPortX':
-								view.resetX();
-								break;
-							case 'vscrollPortY':
-								view.resetY();
-								break;
-							default:
-								throw Error('vscroll unsupported port type ' + type);
-						}
-					});
+			var containerUpdateOff = container.updateEvent.on(
+				function (e) {
+					if (e.force) {
+						container.cursor = port.refresh(container.count, box);
+					}
+				});
 
-			var updateOff = container.updateEvent.on(
-					function (e) {
-						if (e.force) {
-							container.cursor = port.invalidate(container.count, position);
-						}
-					});
+			var portUpdateOff = port.updateEvent.on(
+				function () {
+					update(true);
+				}
+			);
 
 			$scope.$on('$destroy', function () {
 				delete port.markup;
 
 				scrollOff();
-				updateOff();
+				containerUpdateOff();
+				portUpdateOff();
 				containerResetOff();
 				viewResetOff();
 			});
@@ -498,49 +592,45 @@
 	}
 
 	function vscrollCtrl($scope, $element, $window) {
-		var content = $element[0];
+		var box = $element[0];
 		var window = $window;
 		var scrollEvent = new Event();
 		var resetEvent = new Event();
 
 		this.scrollEvent = scrollEvent;
 		this.resetEvent = resetEvent;
+		this.element = box;
 
 		this.drawPlaceholder = function (width, height) {
-			var style = content.style;
-			var placeholder = placeholderBitmap(width || content.clientWidth, height || content.clientHeight);
+			var style = box.style;
+			var placeholder = placeholderBitmap(width || box.clientWidth, height || box.clientHeight);
 
 			style.backgroundImage = 'url(' + placeholder + ')';
 			style.backgroundRepeat = 'repeat';
 		};
 
 		this.resetX = function () {
-			content.scrollLeft = 0;
+			box.scrollLeft = 0;
 		};
 
 		this.resetY = function () {
-			content.scrollTop = 0;
+			box.scrollTop = 0;
 		};
 
 		var onScroll = function () {
-			scrollEvent.emit({
-				width: content.scrollWidth,
-				height: content.scrollHeight,
-				top: content.scrollTop,
-				left: content.scrollLeft
-			});
+			scrollEvent.emit();
 		};
 
 		var onResize = function () {
-			var e = {handled: false, source: 'resize'};
+			var e = { handled: false, source: 'resize' };
 			resetEvent.emit(e);
 		};
 
-		content.addEventListener('scroll', onScroll, {passive: true});
+		box.addEventListener('scroll', onScroll, { passive: true });
 		window.addEventListener('resize', onResize);
 
 		$scope.$on('$destroy', function () {
-			content.removeEventListener('scroll', onScroll);
+			box.removeEventListener('scroll', onScroll);
 			window.removeEventListener('resize', onResize);
 		});
 	}
@@ -554,28 +644,22 @@
 
 	function yLayoutFactory(element, markup, context) {
 		var move = function (pos, value) {
-			if (markup.hasOwnProperty(pos)) {
-				var mark = markup[pos];
-				mark.style.height = value + 'px';
-			} else {
-				element.style['padding' + capitalize(pos)] = value + 'px';
-			}
+			var container = context().container;
+			container.write(function () {
+				if (markup.hasOwnProperty(pos)) {
+					var mark = markup[pos];
+					mark.style.height = value + 'px';
+				} else {
+					element.style['padding' + capitalize(pos)] = value + 'px';
+				}
+			});
 		};
 
 		var self = {
-			getPosition: function (offsets, view) {
+			getPosition: function (offsets, box, arm) {
+				var value = Math.max(0, box.scrollTop - arm);
 				var size = self.itemSize();
-				if (size) {
-					var index = Math.round(view.top / size);
-					return {
-						value: view.top,
-						index: index,
-						offset: view.top,
-						lastOffset: 0
-					};
-				}
-
-				return getPosition(offsets, view.top);
+				return findPosition(offsets, value, size);
 			},
 			move: function (top, bottom) {
 				move('top', top);
@@ -585,18 +669,21 @@
 				var rowHeight = context().settings.rowHeight;
 				return isNumber(rowHeight) ? rowHeight : 0;
 			},
-			viewSize: function (view) {
-				return view.height;
+			scrollSize: function (box) {
+				return box.scrollHeight;
 			},
-			invalidateFactory: function (items) {
-				var invalidate = invalidateFactory(items);
-				return function (offsets, index, count) {
+			portSize: function (box) {
+				return box.portHeight;
+			},
+			recycleFactory: function (items) {
+				var recycle = recycleFactory(items);
+				return function (index, count) {
 					var size = self.itemSize();
 					if (size) {
-						return;
+						return [];
 					}
 
-					return invalidate(offsets, index, count);
+					return recycle(index, count);
 				};
 			}
 		};
@@ -615,10 +702,10 @@
 				context: '<vscrollPortY'
 			},
 			link: vscrollPortLinkFactory(
-					'vscrollPortY',
-					function (newValue, oldValue) {
-						return !oldValue || newValue.top !== oldValue.top;
-					})
+				'vscrollPortY',
+				function (newValue, oldValue) {
+					return !oldValue.portHeight || newValue.scrollTop !== oldValue.scrollTop;
+				})
 		};
 	}
 
@@ -633,20 +720,12 @@
 		};
 
 		var self = {
-			getPosition: function (offsets, view) {
+			getPosition: function (offsets, box, arm) {
+				var value = Math.max(0, box.scrollLeft - arm);
 				var size = self.itemSize();
-				if (size) {
-					var index = Math.round(view.left / size);
-					return {
-						value: view.left,
-						index: index,
-						offset: size * index,
-						lastOffset: 0
-					};
-				}
-
-				return getPosition(offsets, view.left);
-			}, move: function (left, right) {
+				return findPosition(offsets, value, size);
+			},
+			move: function (left, right) {
 				move('left', left);
 				move('right', right);
 			},
@@ -654,18 +733,21 @@
 				var columnWidth = context().settings.columnWidth;
 				return isNumber(columnWidth) ? columnWidth : 0;
 			},
-			viewSize: function (view) {
-				return view.width;
+			scrollSize: function (box) {
+				return box.scrollWidth;
 			},
-			invalidateFactory: function (items) {
-				var invalidate = invalidateFactory(items);
-				return function (offsets, index, count) {
+			portSize: function (box) {
+				return box.portWidth;
+			},
+			recycleFactory: function (items) {
+				var recycle = recycleFactory(items);
+				return function (index, count) {
 					var size = self.itemSize();
 					if (size) {
-						return;
+						return [];
 					}
 
-					return invalidate(offsets, index, count);
+					return recycle(index, count);
 				};
 			}
 		};
@@ -684,10 +766,10 @@
 				context: '<vscrollPortX'
 			},
 			link: vscrollPortLinkFactory(
-					'vscrollPortX',
-					function (newValue, oldValue) {
-						return !oldValue || newValue.left !== oldValue.left;
-					}
+				'vscrollPortX',
+				function (newValue, oldValue) {
+					return !oldValue.portWidth || newValue.scrollLeft !== oldValue.scrollLeft;
+				}
 			)
 		};
 	}
@@ -760,5 +842,4 @@
 			}
 		};
 	}
-})
-(angular);
+})(angular);
