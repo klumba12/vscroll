@@ -220,15 +220,6 @@
 
 				var newPosition = getPosition(offsets, box, minArm);
 				if (force || position.index !== newPosition.index) {
-					console.log('box: ' + JSON.stringify(box));
-					console.log('arm: ' + arm);
-					console.log('minArm: ' + minArm);
-					console.log('offset: ' + position.offset);
-					console.log('lastOffset: ' + position.lastOffset);
-					console.log('oldIndex: ' + position.index);
-					console.log('newIndex: ' + newPosition.index);
-					console.log('offsets length: ' + offsets.length);
-
 					position = newPosition;
 					return newPosition;
 				}
@@ -248,13 +239,6 @@
 				var pad1 = Math.max(0, offset);
 				var pad2 = Math.max(0, maxOffset - pad1);
 
-				console.log('!!!move');
-				console.log('scrollSize: ' + scrollSize);
-				console.log('maxOffset: ' + maxOffset);
-				console.log('pad1: ' + pad1);
-				console.log('pad2: ' + pad2);
-				console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
-
 				move(pad1, pad2);
 				return position.index;
 			};
@@ -270,7 +254,7 @@
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				return position.index;
+				return self.invalidate(count, box, position);
 			};
 
 			this.setItem = function (index, element) {
@@ -356,7 +340,6 @@
 									self.total = count;
 									self.force = true;
 
-									console.log('!!!update event from deferred');
 									self.updateEvent.emit({
 										force: isUndef(force)
 											? (isNumber(settings.rowHeight) && settings.rowHeight > 0) || (isNumber(settings.columnWidth) && settings.columnWidth > 0)
@@ -468,7 +451,6 @@
 					}
 
 					container.force = false;
-					console.log('!!!filter invoked: ' + first + '-' + last);
 				}
 
 				return view;
@@ -504,12 +486,7 @@
 			var container = context.container;
 			var settings = context.settings;
 
-			$scope.$watch(function () {
-				console.log('###DIGEST###');
-			})
-
 			var emit = function (f) {
-				console.log('###EVAL_ASYNC###');
 				$scope.$evalAsync(f);
 			};
 
@@ -517,7 +494,6 @@
 			var tick = function (force) {
 				ticking = false;
 
-				console.log('!!!tick!!!');
 				var count = container.count;
 				var position = port.recycle(count, box, force);
 				if (position) {
@@ -539,7 +515,6 @@
 						portHeight: element.clientHeight
 					};
 
-					console.log('!!!update');
 					if (canApply(newBox, box)) {
 						box = newBox;
 						if (container.count && !ticking) {
@@ -559,8 +534,6 @@
 			}
 
 			var scrollOff = view.scrollEvent.on(function () {
-				console.log('------------------');
-				console.log('!!!scroll update');
 				update(false);
 			});
 
@@ -596,16 +569,12 @@
 			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
 					if (e.force) {
-						console.log('------------------');
-						console.log('!!!container update event');
 						container.cursor = port.refresh(container.count, box);
 					}
 				});
 
 			var portUpdateOff = port.updateEvent.on(
 				function () {
-					console.log('------------------');
-					console.log('!!!port update event');
 					update(true);
 				}
 			);
