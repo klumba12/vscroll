@@ -27,7 +27,6 @@
 		window.msRequestAnimationFrame;
 
 	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
-	var UNSET_OFFSET = 0;
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -100,7 +99,8 @@
 				index: index,
 				offset: itemSize * index,
 				lastOffset: 0,
-				value: value
+				value: value,
+				pad: 0
 			};
 		}
 
@@ -111,7 +111,8 @@
 				index: index,
 				offset: offsets[index - 1],
 				lastOffset: offsets[length - 1],
-				value: value
+				value: value,
+				pad: 0
 			};
 		}
 
@@ -119,7 +120,8 @@
 			index: 0,
 			offset: 0,
 			lastOffset: length ? offsets[length - 1] : 0,
-			value: value
+			value: value,
+			pad: 0
 		};
 	};
 
@@ -167,7 +169,6 @@
 			var element = $element[0];
 			var self = this;
 			var items = [];
-			var maxOffset = UNSET_OFFSET;
 			var minArm = UNSET_ARM;
 			var position = findPosition([], 0, 0);
 			var layout = layoutFactory(
@@ -212,8 +213,9 @@
 			this.updateEvent = new Event();
 
 			this.recycle = function (count, box, force) {
-				var offsets = recycle(position.index, count);
 				var threshold = self.context.settings.threshold;
+				var offsets = recycle(position.index, count);
+				self.context.container.offsets = offsets;
 
 				var arm = getArm(offsets, box, position.index);
 				minArm = Math.min(minArm, arm);
@@ -221,6 +223,28 @@
 				var newPosition = getPosition(offsets, box, minArm);
 				if (force || position.index !== newPosition.index) {
 					position = newPosition;
+
+					var itemSize = getItemSize();
+					if(itemSize){
+						newPosition.pad = Math.max(0, itemSize * (count - threshold));
+					} else{
+						var last = Math.min(offsets.length - 1, position.index + threshold - 1);
+						var first = position.index - 1; 
+						var viewSize = (offsets[last] || 0) - (offsets[first] || 0);
+						var pad = (offsets[offsets.length - 1] || 0) - viewSize; 
+						newPosition.pad = pad;
+					}
+
+					console.log('box: ' + JSON.stringify(box));
+					console.log('arm: ' + arm);
+					console.log('minArm: ' + minArm);
+					console.log('offset: ' + position.offset);
+					console.log('lastOffset: ' + position.lastOffset);
+					console.log('oldIndex: ' + position.index);
+					console.log('newIndex: ' + newPosition.index);
+					console.log('padSize: ' + pad);
+					console.log('offsets length: ' + offsets.length);
+
 					return newPosition;
 				}
 
@@ -232,25 +256,32 @@
 				var threshold = self.context.settings.threshold;
 				var scrollSize = getScrollSize(box);
 				var itemSize = getItemSize();
-				maxOffset = itemSize
-					? Math.max(0, itemSize * (count - threshold))
-					: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
-
+				var maxIndex = Math.min(Math.max(0, count - threshold));
 				var pad1 = Math.max(0, offset);
-				var pad2 = Math.max(0, maxOffset - pad1);
+				var pad2 = Math.max(0, position.pad - pad1);
+
+				console.log('!!!move');
+				console.log('count: ' + (count - (position.index + threshold)));
+				console.log('pad: ' + position.pad);
+				console.log('scrollSize: ' + scrollSize);
+				console.log('pad: ' + position.pad);
+				console.log('offset: ' + position.offset);
+				console.log('lastOffset: ' + position.lastOffset);
+				console.log('pad1: ' + pad1);
+				console.log('pad2: ' + pad2);
+				console.log('viewSize: ' + (scrollSize - (pad1 + pad2)));
+				console.log('diffSize: ' + (position.lastOffset - position.offset));
 
 				move(pad1, pad2);
 				return position.index;
 			};
 
 			this.refresh = function (count, box) {
-				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
 				return self.invalidate(count, box, position);
 			};
 
 			this.reset = function (count, box) {
-				maxOffset = UNSET_OFFSET;
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
@@ -339,6 +370,8 @@
 								if (count !== self.total) {
 									self.total = count;
 									self.force = true;
+
+									console.log('!!!update event from deferred');
 
 									self.updateEvent.emit({
 										force: isUndef(force)
@@ -435,7 +468,10 @@
 				var cursor = container.cursor;
 				var settings = context.settings;
 				var threshold = settings.threshold;
-				var first = cursor; // Math.min(Math.max(0, count - threshold), cursor);
+				// We need to have a less number of virtual items on
+				// the bottom, as deferred loading is happen there shpuld
+				// be a thresold place to draw several items below.
+				var first = cursor;
 				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
 					container.position = first;
@@ -490,9 +526,21 @@
 				$scope.$evalAsync(f);
 			};
 
+			$scope.$watch(function () {
+				console.log('###DIGEST###');
+			});
+
+			var emit = function (f) {
+				console.log('###EVAL_ASYNC###');
+				$scope.$evalAsync(f);
+			};
+
+
 			var ticking = false;
 			var tick = function (force) {
 				ticking = false;
+
+				console.log('!!!tick!!!');
 
 				var count = container.count;
 				var position = port.recycle(count, box, force);
@@ -516,6 +564,7 @@
 					};
 
 					if (canApply(newBox, box)) {
+						console.log('!!!update');
 						box = newBox;
 						if (container.count && !ticking) {
 							ticking = true;
@@ -534,6 +583,8 @@
 			}
 
 			var scrollOff = view.scrollEvent.on(function () {
+				console.log('------------------');
+				console.log('!!!scroll update');
 				update(false);
 			});
 
@@ -569,12 +620,18 @@
 			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
 					if (e.force) {
+						console.log('------------------');
+						console.log('!!!container update event');
+
 						container.cursor = port.refresh(container.count, box);
 					}
 				});
 
 			var portUpdateOff = port.updateEvent.on(
 				function () {
+					console.log('------------------');
+					console.log('!!!port update event');
+
 					update(true);
 				}
 			);
