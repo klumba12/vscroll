@@ -27,7 +27,6 @@
 		window.msRequestAnimationFrame;
 
 	var UNSET_ARM = Number.MAX_SAFE_INTEGER;
-	var UNSET_OFFSET = 0;
 
 	function capitalize(text) {
 		return text[0].toUpperCase() + text.slice(1);
@@ -100,7 +99,8 @@
 				index: index,
 				offset: itemSize * index,
 				lastOffset: 0,
-				value: value
+				value: value,
+				pad: 0
 			};
 		}
 
@@ -111,7 +111,8 @@
 				index: index,
 				offset: offsets[index - 1],
 				lastOffset: offsets[length - 1],
-				value: value
+				value: value,
+				pad: 0
 			};
 		}
 
@@ -119,7 +120,8 @@
 			index: 0,
 			offset: 0,
 			lastOffset: length ? offsets[length - 1] : 0,
-			value: value
+			value: value,
+			pad: 0
 		};
 	};
 
@@ -167,7 +169,6 @@
 			var element = $element[0];
 			var self = this;
 			var items = [];
-			var maxOffset = UNSET_OFFSET;
 			var minArm = UNSET_ARM;
 			var position = findPosition([], 0, 0);
 			var layout = layoutFactory(
@@ -209,57 +210,51 @@
 				return UNSET_ARM;
 			};
 
-			this.updateEvent = new Event();
-
 			this.recycle = function (count, box, force) {
-				var offsets = recycle(position.index, count);
 				var threshold = self.context.settings.threshold;
+				var offsets = recycle(position.index, count);
 
 				var arm = getArm(offsets, box, position.index);
 				minArm = Math.min(minArm, arm);
 
 				var newPosition = getPosition(offsets, box, minArm);
 				if (force || position.index !== newPosition.index) {
-					position = newPosition;
-					return newPosition;
+					var itemSize = getItemSize();
+					if (itemSize) {
+						newPosition.pad = Math.max(0, itemSize * (count - threshold));
+					} else {
+						var last = Math.min(offsets.length - 1, newPosition.index + threshold - 1);
+						var first = newPosition.index - 1;
+						var viewSize = (offsets[last] || 0) - (offsets[first] || 0);
+						var scrollSize = offsets[offsets.length - 1] || 0;
+						var padSize = scrollSize - viewSize;
+						newPosition.pad = padSize;
+					}
+
+					return position = newPosition;
 				}
 
 				return null;
 			};
 
-			this.invalidate = function (count, box, position) {
+			this.invalidate = function (position) {
 				var offset = position.offset;
-				var threshold = self.context.settings.threshold;
-				var scrollSize = getScrollSize(box);
-				var itemSize = getItemSize();
-				maxOffset = itemSize
-					? Math.max(0, itemSize * (count - threshold))
-					: scrollSize <= position.lastOffset ? Math.max(maxOffset, offset) : maxOffset;
-
 				var pad1 = Math.max(0, offset);
-				var pad2 = Math.max(0, maxOffset - pad1);
+				var pad2 = Math.max(0, position.pad - pad1);
 
 				move(pad1, pad2);
 				return position.index;
 			};
 
-			this.refresh = function (count, box) {
-				maxOffset = UNSET_OFFSET;
-				minArm = UNSET_ARM;
-				return self.invalidate(count, box, position);
-			};
-
-			this.reset = function (count, box) {
-				maxOffset = UNSET_OFFSET;
+			this.reset = function () {
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				return self.invalidate(count, box, position);
+				return self.invalidate(position);
 			};
 
 			this.setItem = function (index, element) {
 				items[index] = element;
-				self.updateEvent.emit({ action: 'set', index: index });
 			};
 
 			this.removeItem = function (index) {
@@ -277,8 +272,6 @@
 					// TODO: think how to avoid this
 					items[index] = empty;
 				}
-
-				self.updateEvent.emit({ action: 'remove', index: index });
 			};
 		};
 	}
@@ -313,12 +306,17 @@
 					emit(f);
 				},
 
+				place() {
+					var threshold = settings.threshold;
+					var cursor = this.cursor;
+					return Math.ceil((cursor + threshold) / threshold) - 1;
+				},
+
 				update: function (count, force) {
 					var self = this;
 					var threshold = settings.threshold;
-					var cursor = self.cursor;
-					var oldPage = self.page;
-					var newPage = Math.ceil((cursor + threshold) / threshold) - 1;
+					var largestPage = self.page;
+					var currentPage = self.place();
 
 					if (self.count !== count) {
 						self.count = count;
@@ -330,8 +328,8 @@
 						});
 					}
 
-					if (force || newPage > oldPage) {
-						self.page = newPage;
+					if (force || currentPage > largestPage) {
+						self.page = currentPage;
 
 						var deferred = $q.defer();
 						deferred.promise
@@ -348,16 +346,16 @@
 								}
 							});
 
-						if (newPage === 0) {
+						if (currentPage === 0) {
 							settings.fetch(0, threshold, deferred);
 						}
 						else {
-							var skip = (oldPage + 1) * threshold;
+							var skip = (largestPage + 1) * threshold;
 							if (self.total < skip) {
 								deferred.resolve(self.total);
 							}
 							else {
-								var take = (newPage - oldPage) * threshold;
+								var take = (currentPage - largestPage) * threshold;
 								settings.fetch(skip, take, deferred);
 							}
 						}
@@ -435,6 +433,9 @@
 				var cursor = container.cursor;
 				var settings = context.settings;
 				var threshold = settings.threshold;
+				// We need to have a less number of virtual items on
+				// the bottom, as deferred loading is happen there shpuld
+				// be a thresold place to draw several items below.
 				var first = cursor; // Math.min(Math.max(0, count - threshold), cursor);
 				if (container.force || first !== container.position) {
 					var last = Math.min(cursor + threshold, count);
@@ -498,7 +499,7 @@
 				var position = port.recycle(count, box, force);
 				if (position) {
 					container.apply(function () {
-						container.cursor = port.invalidate(count, box, position);
+						container.cursor = port.invalidate(position);
 					}, emit);
 				}
 			};
@@ -515,7 +516,7 @@
 						portHeight: element.clientHeight
 					};
 
-					if (canApply(newBox, box)) {
+					if (force || canApply(newBox, box)) {
 						box = newBox;
 						if (container.count && !ticking) {
 							ticking = true;
@@ -553,7 +554,7 @@
 						return;
 					}
 
-					container.cursor = port.reset(container.count, box);
+					container.cursor = port.reset();
 					switch (type) {
 						case 'vscrollPortX':
 							view.resetX();
@@ -569,22 +570,15 @@
 			var containerUpdateOff = container.updateEvent.on(
 				function (e) {
 					if (e.force) {
-						container.cursor = port.refresh(container.count, box);
+						update(true);
 					}
 				});
-
-			var portUpdateOff = port.updateEvent.on(
-				function () {
-					update(true);
-				}
-			);
 
 			$scope.$on('$destroy', function () {
 				delete port.markup;
 
 				scrollOff();
 				containerUpdateOff();
-				portUpdateOff();
 				containerResetOff();
 				viewResetOff();
 			});
