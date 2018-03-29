@@ -237,12 +237,8 @@
 				return null;
 			};
 
-			this.invalidate = function (count, box, position) {
+			this.invalidate = function (position) {
 				var offset = position.offset;
-				var threshold = self.context.settings.threshold;
-				var scrollSize = getScrollSize(box);
-				var itemSize = getItemSize();
-				var maxIndex = Math.min(Math.max(0, count - threshold));
 				var pad1 = Math.max(0, offset);
 				var pad2 = Math.max(0, position.pad - pad1);
 
@@ -250,11 +246,11 @@
 				return position.index;
 			};
 
-			this.reset = function (count, box) {
+			this.reset = function () {
 				minArm = UNSET_ARM;
 				recycle = layout.recycleFactory(items);
 				position = findPosition([], 0, 0);
-				return self.invalidate(count, box, position);
+				return self.invalidate(position);
 			};
 
 			this.setItem = function (index, element) {
@@ -503,7 +499,7 @@
 				var position = port.recycle(count, box, force);
 				if (position) {
 					container.apply(function () {
-						container.cursor = port.invalidate(count, box, position);
+						container.cursor = port.invalidate(position);
 					}, emit);
 				}
 			};
@@ -558,7 +554,7 @@
 						return;
 					}
 
-					container.cursor = port.reset(container.count, box);
+					container.cursor = port.reset();
 					switch (type) {
 						case 'vscrollPortX':
 							view.resetX();
