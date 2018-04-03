@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 - Better refresh algorithm.
 
+## [1.5.2] - 2018-04-03
+### Fixed
+- Reject data fetching promise on container reset.
+
 ## [1.5.1] - 2018-03-29
 ### Added
 - `Place` method to the container that returns current page number, so user can modify it.
