@@ -278,6 +278,7 @@
 
 	function vscrollService($q) {
 		return function (settings) {
+			var deferred = null;
 			var container = {
 				count: 0,
 				total: 0,
@@ -331,7 +332,7 @@
 					if (force || currentPage > largestPage) {
 						self.page = currentPage;
 
-						var deferred = $q.defer();
+						deferred = $q.defer();
 						deferred.promise
 							.then(function (count) {
 								if (count !== self.total) {
@@ -344,6 +345,11 @@
 											: force
 									});
 								}
+
+								deferred = null;
+							})
+							.catch(function () {
+								deferred = null;
 							});
 
 						if (currentPage === 0) {
@@ -364,6 +370,10 @@
 				},
 
 				reset: function () {
+					if (deferred) {
+						deferred.reject();
+					}
+
 					this.count = 0;
 					this.total = 0;
 					this.position = 0;
