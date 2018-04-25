@@ -291,15 +291,15 @@
 				updateEvent: new Event(),
 				drawEvent: new Event(),
 
-				tick(f) {
+				tick: function (f) {
 					rAF(f);
 				},
 
-				read(f) {
+				read: function (f) {
 					f();
 				},
 
-				write(f) {
+				write: function (f) {
 					f();
 				},
 
@@ -307,7 +307,7 @@
 					emit(f);
 				},
 
-				place() {
+				place: function () {
 					var threshold = settings.threshold;
 					var cursor = this.cursor;
 					return Math.ceil((cursor + threshold) / threshold) - 1;
