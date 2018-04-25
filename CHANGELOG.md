@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 ## [Unreleased]
 - Better refresh algorithm.
 
+## [1.5.3] - 2018-04-25
+### Fixed
+- ES5 compatible.
+
 ## [1.5.2] - 2018-04-03
 ### Fixed
 - Reject data fetching promise on container reset.
@@ -28,6 +32,8 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 ### Fixed
 - Unnessasary digest calls.
 
-[Unreleased]: https://github.com/klumba12/vscroll/compare/v1.5.1...HEAD
-[1.5.1]: https://github.com/qgrid/ng/compare/v1.5.0...v1.5.1
+[Unreleased]: https://github.com/klumba12/vscroll/compare/v1.5.3...HEAD
+[1.5.3]: https://github.com/qgrid/ng/compare/v1.5.3...v1.5.2
+[1.5.2]: https://github.com/qgrid/ng/compare/v1.5.2...v1.5.1
+[1.5.1]: https://github.com/qgrid/ng/compare/v1.5.1...v1.5.0
 [1.5.0]: https://github.com/qgrid/ng/compare/v1.4.0...v1.5.0
